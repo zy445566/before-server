@@ -46,4 +46,13 @@ httpServer.listen(bsConfig.httpPort,listenCallBack('proxy','http',`127.0.0.1:${b
 httpServer.on('upgrade',dealSocketRequest);
 httpsServer.listen(bsConfig.httpsPort,listenCallBack('proxy','https',`127.0.0.1:${bsConfig.httpsPort}`));
 httpsServer.on('upgrade',dealSocketRequest);
+proxy.on('proxyRes', function (proxyRes, req, res) {
+    proxyRes.on('data', function (chunk) {
+        console.log(chunk.toString());
+    });
+    proxyRes.on('end', function () {
+        console.log("res over");
+    });
+    console.log('RAW Response from the target', JSON.stringify(proxyRes.headers, true, 2));
+});
 // 等待添加监控界面服务
