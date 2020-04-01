@@ -1,0 +1,28 @@
+{
+  "name": "before-server",
+  "version": "1.0.0",
+  "description": "before server for query client request",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zy445566/before-server.git"
+  },
+  "keywords": [
+    "before",
+    "server",
+    "client",
+    "request"
+  ],
+  "author": "zy445566",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zy445566/before-server/issues"
+  },
+  "homepage": "https://github.com/zy445566/before-server#readme",
+  "dependencies": {
+    "http-proxy": "^1.18.0"
+  }
+}
