@@ -4,7 +4,7 @@ const http = require('http');
 const httpProxy = require('http-proxy');
 const proxy = httpProxy.createProxyServer({});
 
-function dealRequest(req,res) {
+function dealWebRequest(req,res) {
     for(const key of Object.keys(bsConfig.proxyTable)) {
         if(req.url.indexOf(key)===0) {
             return proxy.web(req, res, bsConfig.proxyTable[key]);
@@ -16,10 +16,23 @@ function dealRequest(req,res) {
         +JSON.stringify({
         proxyTable:{
             '/': {
-                target: 'http://www.abc.com'
+                target: 'http://www.aaa.com'
+            },
+            '/api': {
+                target: 'https://www.bbb.com'
+            },
+            '/ws': {
+                target: 'ws://www.ccc.com'
+            },
+            '/ws/api': {
+                target: 'wss://www.ddd.com'
             }
         }
     },null,2))
+}
+
+function dealSocketRequest(req, socket, head) {
+    return proxy.ws(req, socket, head);
 }
 
 function listenCallBack(type,protocol,hostname) {
@@ -27,6 +40,10 @@ function listenCallBack(type,protocol,hostname) {
         console.log(`${type} server listening ${protocol}://${hostname}/`)
     }
 }
-http.createServer(dealRequest).listen(bsConfig.httpPort,listenCallBack('proxy','http',`127.0.0.1:${bsConfig.httpPort}`));
-https.createServer(bsConfig.ssl,dealRequest).listen(bsConfig.httpsPort,listenCallBack('proxy','https',`127.0.0.1:${bsConfig.httpsPort}`));
-// 等待添加监控服务
+const httpServer = http.createServer(dealWebRequest);
+const httpsServer = https.createServer(bsConfig.ssl,dealWebRequest)
+httpServer.listen(bsConfig.httpPort,listenCallBack('proxy','http',`127.0.0.1:${bsConfig.httpPort}`));
+httpServer.on('upgrade',dealSocketRequest);
+httpsServer.listen(bsConfig.httpsPort,listenCallBack('proxy','https',`127.0.0.1:${bsConfig.httpsPort}`));
+httpsServer.on('upgrade',dealSocketRequest);
+// 等待添加监控界面服务
