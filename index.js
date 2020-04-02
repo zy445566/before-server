@@ -4,7 +4,11 @@ const http = require('http');
 const httpProxy = require('http-proxy');
 const proxy = httpProxy.createProxyServer({});
 
-function dealWebRequest(req,res) {
+async function dealWebRequest(req,res) {
+    req.body = ''
+    req.on('data', function (chunk) {
+        req.body+=chunk.toString();
+    });
     for(const key of Object.keys(bsConfig.proxyTable)) {
         if(req.url.indexOf(key)===0) {
             return proxy.web(req, res, bsConfig.proxyTable[key]);
@@ -46,15 +50,8 @@ httpServer.listen(bsConfig.httpPort,listenCallBack('proxy','http',`127.0.0.1:${b
 httpServer.on('upgrade',dealSocketRequest);
 httpsServer.listen(bsConfig.httpsPort,listenCallBack('proxy','https',`127.0.0.1:${bsConfig.httpsPort}`));
 httpsServer.on('upgrade',dealSocketRequest);
-proxy.on('proxyReq', function (proxyReq, req, res) {
-    req.on('data', function (chunk) {
-        console.log(chunk.toString());
-    });
-    req.on('end', function () {
-        console.log("req over");
-    });
-})
 proxy.on('proxyRes', function (proxyRes, req, res) {
+    console.log(Object.keys(req))
     proxyRes.on('data', function (chunk) {
         console.log(chunk.toString());
     });
