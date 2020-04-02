@@ -46,6 +46,14 @@ httpServer.listen(bsConfig.httpPort,listenCallBack('proxy','http',`127.0.0.1:${b
 httpServer.on('upgrade',dealSocketRequest);
 httpsServer.listen(bsConfig.httpsPort,listenCallBack('proxy','https',`127.0.0.1:${bsConfig.httpsPort}`));
 httpsServer.on('upgrade',dealSocketRequest);
+proxy.on('proxyReq', function (proxyReq, req, res) {
+    req.on('data', function (chunk) {
+        console.log(chunk.toString());
+    });
+    req.on('end', function () {
+        console.log("req over");
+    });
+})
 proxy.on('proxyRes', function (proxyRes, req, res) {
     proxyRes.on('data', function (chunk) {
         console.log(chunk.toString());
@@ -53,6 +61,15 @@ proxy.on('proxyRes', function (proxyRes, req, res) {
     proxyRes.on('end', function () {
         console.log("res over");
     });
-    console.log('RAW Response from the target', JSON.stringify(proxyRes.headers, true, 2));
+    // console.log(
+    //     JSON.stringify(req.httpVersion, true, 2), 
+    //     JSON.stringify(req.headers, true, 2), 
+    //     JSON.stringify(req.url, true, 2), 
+    //     JSON.stringify(req.method, true, 2), 
+    //     JSON.stringify(proxyRes.headers, true, 2),
+    //     JSON.stringify(proxyRes.trailers, true, 2),
+    //     JSON.stringify(proxyRes.statusCode, true, 2),
+    //     JSON.stringify(proxyRes.statusMessage, true, 2)
+    // );
 });
 // 等待添加监控界面服务
