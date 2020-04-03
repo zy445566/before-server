@@ -1,6 +1,7 @@
 const bsConfig = require('../.bsrc.js');
+const {getConfig, listenCallBack,getConfigTipString} = require('../util')
+Object.assign(bsConfig, getConfig());
 const path = require('path');
-const {listenCallBack,getConfigTipString} = require('../util')
 const Koa = require('koa');
 const koaStatic = require('koa-static');
 const koaRouter = require('koa-router');

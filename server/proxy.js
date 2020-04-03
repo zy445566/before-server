@@ -1,10 +1,11 @@
 const bsConfig = require('../.bsrc.js');
+const {getConfig, listenCallBack,getConfigTipString} = require('../util')
+Object.assign(bsConfig, getConfig());
 const https = require('https');
 const http = require('http');
 const streamify = require('stream-array');
 const httpProxy = require('http-proxy');
 const proxy = httpProxy.createProxyServer({});
-const {listenCallBack,getConfigTipString} = require('../util')
 
 function getStreamData(stream) {
     return new Promise ((reslove,reject)=>{

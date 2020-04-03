@@ -1,7 +1,17 @@
+const fs =require('fs');
+const path =require('path');
 module.exports.listenCallBack = function(type,protocol,hostname) {
     return ()=>{
         console.log(`${type} server listening ${protocol}://${hostname}/`)
     }
+}
+
+module.exports.getConfig = function() {
+    const configPath = path.join(process.cwd(),'.bsrc.js');
+    if(fs.existsSync(configPath)) {
+        return require(configPath)
+    }
+    return {}
 }
 
 module.exports.getConfigTipString = function() {
