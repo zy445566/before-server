@@ -99,15 +99,5 @@ proxy.on('proxyRes', async function (proxyRes, req, res) {
             body:proxyRes.body,
         }
     })
-    // console.log(
-    //     JSON.stringify(req.httpVersion, true, 2), 
-    //     JSON.stringify(req.headers, true, 2), 
-    //     JSON.stringify(req.url, true, 2), 
-    //     JSON.stringify(req.method, true, 2), 
-    //     JSON.stringify(proxyRes.headers, true, 2),
-    //     JSON.stringify(proxyRes.trailers, true, 2),
-    //     JSON.stringify(proxyRes.statusCode, true, 2),
-    //     JSON.stringify(proxyRes.statusMessage, true, 2)
-    // );
 });
 // 等待添加监控界面服务
