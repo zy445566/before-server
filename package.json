@@ -6,6 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "bin": {
+    "before-server": "./bin/before-server.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/zy445566/before-server.git"
@@ -24,6 +27,9 @@
   "homepage": "https://github.com/zy445566/before-server#readme",
   "dependencies": {
     "http-proxy": "^1.18.0",
+    "koa": "^2.11.0",
+    "koa-router": "^8.0.8",
+    "koa-static": "^5.0.0",
     "stream-array": "^1.1.2"
   }
 }
