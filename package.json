@@ -4,6 +4,9 @@
   "description": "before server for query client request",
   "main": "index.js",
   "scripts": {
+    "build:ui": "npx webpack",
+    "bin":"node ./bin/before-server.js",
+    "dev": "npm run build:ui && npm run bin",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
@@ -31,5 +34,11 @@
     "koa-router": "^8.0.8",
     "koa-static": "^5.0.0",
     "stream-array": "^1.1.2"
+  },
+  "devDependencies": {
+    "html-loader": "^1.1.0",
+    "html-webpack-plugin": "^4.0.4",
+    "webpack": "^4.42.1",
+    "webpack-cli": "^3.3.11"
   }
 }

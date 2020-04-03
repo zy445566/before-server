@@ -102,3 +102,7 @@ dist
 
 # TernJS port file
 .tern-port
+
+# project
+server/static/index.html
+server/static/webpack.bundle.js
