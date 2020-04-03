@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/zy445566/before-server#readme",
   "dependencies": {
-    "http-proxy": "^1.18.0"
+    "http-proxy": "^1.18.0",
+    "stream-array": "^1.1.2"
   }
 }
