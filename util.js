@@ -15,7 +15,7 @@ module.exports.getConfig = function() {
 }
 
 module.exports.getConfigTipString = function() {
-    return '请配置proxyTable在.bsrc.js中后重启服务，如下\n\n' +JSON.stringify({
+    return `请配置当前工作目录的.bsrc.js文件(${process.cwd()}${path.sep}.bsrc.js)配置项proxyTable后重启服务，如下\n\n` +JSON.stringify({
         proxyTable:{
             '/': {
                 target: 'http://www.aaa.com'
