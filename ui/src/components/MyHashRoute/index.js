@@ -4,9 +4,11 @@ export default class MyHashRoute extends HTMLContent {
         super();
         this.path = this.getAttribute('path');
         this.tag = this.getAttribute('tag');
+        this.routeType = 'hash'
         this.renderView()
         this.addListen();
     }
+
     addListen() {
         const body = document.querySelector('body')
         const beforeHashChange = body.onhashchange;
@@ -18,7 +20,7 @@ export default class MyHashRoute extends HTMLContent {
         }
     }
     renderView() {
-        const html = window.location.hash==this.path?`<${this.tag}/>`:'';
+        const html = window.location.hash.split("?")[0]==this.path?`<${this.tag} route-type="${this.routeType}"/>`:'';
         this.render(html)
     }
   }
