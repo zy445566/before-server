@@ -15,19 +15,19 @@ module.exports.getConfig = function() {
 }
 
 module.exports.getConfigTipString = function() {
-    return `请配置当前工作目录的.bsrc.js文件(${process.cwd()}${path.sep}.bsrc.js)配置项proxyTable后重启服务，如下\n\n` +JSON.stringify({
+    return `请配置当前工作目录的.bsrc.js文件(${process.cwd()}${path.sep}.bsrc.js)配置项proxyTable后重启服务，例子如下\n\n` +JSON.stringify({
         proxyTable:{
             '/': {
                 target: 'http://www.aaa.com'
             },
             '/api': {
-                target: 'https://www.bbb.com'
+                target: 'https://www.bbb.com/api'
             },
             '/ws': {
-                target: 'ws://www.ccc.com'
+                target: 'ws://www.ccc.com/ws'
             },
             '/ws/api': {
-                target: 'wss://www.ddd.com'
+                target: 'wss://www.ddd.com/ws/api'
             }
         }
     },null,2)
