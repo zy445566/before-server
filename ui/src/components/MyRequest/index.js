@@ -32,7 +32,6 @@ class MyRequest {
 
     async doResponse(response) {
         const resp = await response.json()
-        // 国际化 resp.errCode
         if(resp.errorCode) {
             throw(new Error(resp.errorCode))
         }

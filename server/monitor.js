@@ -8,10 +8,25 @@ const koaRouter = require('koa-router');
 const router = new koaRouter({
     prefix: '/api'
 })
+router.get('/get_config',async (ctx)=>{
+    ctx.body = bsConfig
+})
 
+router.get('/get_config_tip',async (ctx)=>{
+    ctx.body = {
+        tip:getConfigTipString()
+    }
+})
 module.exports = function start () {
     const app = new Koa();
     app.use(koaStatic(path.join(__dirname, 'static'),{index:'index.html'}));
     app.use(router.routes())
-    app.listen(bsConfig.monitorPort,listenCallBack('monitor','http',`127.0.0.1:${bsConfig.monitorPort}`))
+    const server = app.listen(bsConfig.monitorPort,listenCallBack('monitor','http',`127.0.0.1:${bsConfig.monitorPort}`))
+    server.on('upgrade', (req, socket, head) => {
+        socket.write('HTTP/1.1 101 Web Socket Protocol Handshake\r\n' +
+                     'Upgrade: WebSocket\r\n' +
+                     'Connection: Upgrade\r\n' +
+                     '\r\n');
+        socket.pipe(socket); // 客户端输入服务端直接返回
+    });
 }

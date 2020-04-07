@@ -1,9 +1,41 @@
 
 <link rel="stylesheet" href="/bootstrap.min.css">
-<div class="container">
-    <div class="row justify-content-center">
-      <div class="col-4">
-        <button type="button" class="btn btn-primary">Monitor UI building</button>
+<template id="my-row">
+  <div class="row justify-content-center">
+    <div class="col-10">
+      <div class="input-group">
+        <div class="input-group-prepend">
+          <span class="input-group-text before-text"></span>
+        </div>
+        <input type="text" class="form-control url-input" disabled="true">
+        <div class="input-group-append">
+          <button type="button" class="btn btn-primary">前往监控</button>
+        </div>
       </div>
     </div>
   </div>
+</template>
+<template id="my-card">
+  <div class="row justify-content-center">
+    <div class="col-10">
+      <div class="card">
+        <div class="card-body">
+          <pre class="plain-text"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+<div class="container my-haed">
+  <div class="row justify-content-center">
+    <div class="col-10">
+      <div class="jumbotron">
+        <h1 class="display-4">监控转发列表</h1>
+        <p class="lead"></p>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="container my-main">
+    
+</div>
