@@ -21,6 +21,9 @@ export default class MyHome extends HTMLContent {
                 let myRowTemplateContent = myRowTemplate.content.cloneNode(true);
                 myRowTemplateContent.querySelector(".before-text").innerHTML = `转发(URL:${proxyKey})到:`
                 myRowTemplateContent.querySelector(".url-input").value = resp.proxyTable[proxyKey].target;
+                myRowTemplateContent.querySelector(".go-monitor-btn").addEventListener('click',()=>{
+                    window.location.hash=`#my-monitor?key=${proxyKey}`;
+                })
                 mainContainer.appendChild(myRowTemplateContent)
             }
         } else {
@@ -30,9 +33,6 @@ export default class MyHome extends HTMLContent {
             myCardTemplateContent.querySelector(".plain-text").innerHTML = resp.tip;
             mainContainer.appendChild(myCardTemplateContent)
         }
-        
     }
-    addListen() {
 
-    }
 }

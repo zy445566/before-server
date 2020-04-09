@@ -6,7 +6,9 @@ module.exports = {
             cert: fs.readFileSync(path.join(__dirname,'keys','cert.pem'), 'utf8')
     },
     proxyTable:{
-
+        '/': {
+            target: 'http://test.api.sosho.cn:7001'
+        },
     },
     httpPort:8000,
     httpsPort:8443,

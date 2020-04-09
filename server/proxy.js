@@ -1,5 +1,5 @@
 const bsConfig = require('../.bsrc.js');
-const {getConfig, listenCallBack,getConfigTipString} = require('../util')
+const {getConfig, listenCallBack,matchProxyTableKeysUrlIndex, getConfigTipString} = require('../util/index')
 Object.assign(bsConfig, getConfig());
 const https = require('https');
 const http = require('http');
@@ -35,18 +35,19 @@ function getStreamData(stream) {
 
 
 async function dealWebRequest(req,res) {
+    const proxyTableKeys = Object.keys(bsConfig.proxyTable)
+    const proxyTableIndex = matchProxyTableKeysUrlIndex(req.url,proxyTableKeys)
+    if(proxyTableKeys<=0 && proxyTableIndex<0){
+        res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+        return res.end(getConfigTipString())
+    }
     req.rawBody = await getStreamData(req);
     req.body = Buffer.concat(req.rawBody).toString();
-    for(const key of Object.keys(bsConfig.proxyTable)) {
-        if(req.url.indexOf(key)===0) {
-            return proxy.web(req, res, {
-                buffer:streamify(req.rawBody),
-                ...bsConfig.proxyTable[key],
-            });
-        }
-    }
-    res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
-    return res.end(getConfigTipString())
+    return proxy.web(req, res, {
+        buffer:streamify(req.rawBody),
+        ...bsConfig.proxyTable[proxyTableKeys[proxyTableIndex]],
+    });
+    
 }
 
 function dealSocketRequest(req, socket, head) {
