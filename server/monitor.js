@@ -37,7 +37,9 @@ module.exports = function start () {
         let fifterConfig = {key:""}
         socket.on('data', (data) => {
             const frame = decodeSocketFrame(data);
-            fifterConfig = JSON.parse(frame.payloadBuf.toString());
+            if(frame.fin===1) {
+                fifterConfig = JSON.parse(frame.payloadBuf.toString());
+            }
         });
         let sendProxyRequestInfoFunc = function(eventData) {
             if(fifterConfig.key) {
