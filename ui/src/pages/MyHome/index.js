@@ -26,6 +26,12 @@ export default class MyHome extends HTMLContent {
                 })
                 mainContainer.appendChild(myRowTemplateContent)
             }
+            const lastRowTemplate = this.shadow.querySelector("#last-row");
+            let lastRowTemplateContent = lastRowTemplate.content.cloneNode(true);
+            lastRowTemplateContent.querySelector(".go-monitor-btn").addEventListener('click',()=>{
+                window.location.hash=`#my-monitor?key=`;
+            })
+            mainContainer.appendChild(lastRowTemplateContent)
         } else {
             const resp = await myRequest.get('/get_config_tip');
             const myCardTemplate = this.shadow.querySelector("#my-card");

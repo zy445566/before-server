@@ -37,7 +37,7 @@ function getStreamData(stream) {
 async function dealWebRequest(req,res) {
     const proxyTableKeys = Object.keys(bsConfig.proxyTable)
     const proxyTableIndex = matchProxyTableKeysUrlIndex(req.url,proxyTableKeys)
-    if(proxyTableKeys<=0 && proxyTableIndex<0){
+    if(proxyTableKeys.length<=0 && proxyTableIndex<0){
         res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
         return res.end(getConfigTipString())
     }

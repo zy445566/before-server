@@ -26,20 +26,37 @@ module.exports = function start () {
     const server = app.listen(bsConfig.monitorPort,listenCallBack('monitor','http',`127.0.0.1:${bsConfig.monitorPort}`))
     server.on('upgrade', (req, socket, head) => {
         const secWebSocketAccept = getSecWebSocketAccept(req.headers['sec-websocket-key'])
-        socket.write('HTTP/1.1 101 Web Socket Protocol Handshake\r\n' +
-                     'Upgrade: WebSocket\r\n' +
-                     'Connection: Upgrade\r\n' +
-                     'Sec-WebSocket-Accept: '+ secWebSocketAccept +'\r\n' +
-                     '\r\n');
-        // socket.on('data', (data) => {
-        //     console.log(decodeSocketFrame(data))
-        // });
+        socket.write(
+            'HTTP/1.1 101 Web Socket Protocol Handshake\r\n' +
+            'Upgrade: WebSocket\r\n' +
+            'Connection: Upgrade\r\n' +
+            'Sec-WebSocket-Accept: '+ secWebSocketAccept +'\r\n' +
+            '\r\n'
+        );
+        let fifterConfig = {key:""}
+        socket.on('data', (data) => {
+            const frame = decodeSocketFrame(data);
+            fifterConfig = JSON.parse(frame.payloadBuf.toString());
+        });
+        const proxyTableKeys = Object.keys(bsConfig.proxyTable)
         let sendProxyRequestInfoFunc = function(eventData) {
-            socket.write(encodeSocketFrame({
-                fin:1,
-                opcode:1,
-                payloadBuf:Buffer.from(JSON.stringify(eventData))
-            }))
+            if(fifterConfig.key) {
+                const proxyTableIndex = matchProxyTableKeysUrlIndex(eventData.req.url,proxyTableKeys);
+                if(proxyTableIndex>=0) {
+                    socket.write(encodeSocketFrame({
+                        fin:1,
+                        opcode:1,
+                        payloadBuf:Buffer.from(JSON.stringify(eventData))
+                    }))
+                }
+            } else {
+                socket.write(encodeSocketFrame({
+                    fin:1,
+                    opcode:1,
+                    payloadBuf:Buffer.from(JSON.stringify(eventData))
+                }))
+            }
+            
         }
         socket.on('end', () => {
             app.removeListener('proxy-request-info', sendProxyRequestInfoFunc);
