@@ -67,7 +67,6 @@ module.exports.encodeSocketFrame = function (frame){
     const frameBufList = [];
     // 对fin位移七位则为10000000加opcode为10000001
     const header = (frame.fin<<7)+frame.opcode;
-    console.log(header)
     frameBufList.push(header)
     const bufBits = Buffer.byteLength(frame.payloadBuf);
     let payloadLen = bufBits;
@@ -76,11 +75,11 @@ module.exports.encodeSocketFrame = function (frame){
         //65536是2**16即两字节数字极限
         if(bufBits>=65536) {
             extBuf = Buffer.allocUnsafe(8);
-            buf.writeUInt32BE(bufBits, 4);
+            extBuf.writeUInt32BE(bufBits, 4);
             payloadLen = 127;
         } else {
             extBuf = Buffer.allocUnsafe(2);
-            buf.writeUInt16BE(bufBits, 0);
+            extBuf.writeUInt16BE(bufBits, 0);
             payloadLen = 126;
         }
     }
@@ -88,7 +87,7 @@ module.exports.encodeSocketFrame = function (frame){
     while(payloadLenBinStr.length<8){payloadLenBinStr='0'+payloadLenBinStr;}
     frameBufList.push(parseInt(payloadLenBinStr,2));
     if(bufBits>=126) {
-        frameBufList.push(extBuf);
+        frameBufList.push(...extBuf);
     }
     frameBufList.push(...frame.payloadBuf)
     return Buffer.from(frameBufList)

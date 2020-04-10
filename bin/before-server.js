@@ -2,5 +2,8 @@
 const proxyServerStart = require('../server/proxy');
 const monitorServerStart = require('../server/monitor');
 
-proxyServerStart();
-monitorServerStart();
+let koaEmitter;
+proxyServerStart((data)=>{
+    koaEmitter.emit('proxy-request-info', data);
+});
+koaEmitter = monitorServerStart();

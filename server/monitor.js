@@ -31,18 +31,21 @@ module.exports = function start () {
                      'Connection: Upgrade\r\n' +
                      'Sec-WebSocket-Accept: '+ secWebSocketAccept +'\r\n' +
                      '\r\n');
-        // socket.pipe(socket);
-        socket.on('data', (data) => {
-            console.log(decodeSocketFrame(data))
+        // socket.on('data', (data) => {
+        //     console.log(decodeSocketFrame(data))
+        // });
+        let sendProxyRequestInfoFunc = function(eventData) {
             socket.write(encodeSocketFrame({
                 fin:1,
                 opcode:1,
-                payloadBuf:Buffer.from('你好')
+                payloadBuf:Buffer.from(JSON.stringify(eventData))
             }))
-        });
+        }
         socket.on('end', () => {
-            console.log('disconnected from server');
+            app.removeListener('proxy-request-info', sendProxyRequestInfoFunc);
         });
-        // socket.pipe(socket); // 客户端输入服务端直接返回
+
+        app.on('proxy-request-info', sendProxyRequestInfoFunc);
     });
+    return app;
 }
