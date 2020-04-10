@@ -20,6 +20,7 @@ router.get('/get_config_tip',async (ctx)=>{
 })
 
 module.exports = function start () {
+    const proxyTableKeys = Object.keys(bsConfig.proxyTable)
     const app = new Koa();
     app.use(koaStatic(path.join(__dirname, 'static'),{index:'index.html'}));
     app.use(router.routes())
@@ -38,7 +39,6 @@ module.exports = function start () {
             const frame = decodeSocketFrame(data);
             fifterConfig = JSON.parse(frame.payloadBuf.toString());
         });
-        const proxyTableKeys = Object.keys(bsConfig.proxyTable)
         let sendProxyRequestInfoFunc = function(eventData) {
             if(fifterConfig.key) {
                 const proxyTableIndex = matchProxyTableKeysUrlIndex(eventData.req.url,proxyTableKeys);
