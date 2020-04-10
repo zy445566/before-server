@@ -37,7 +37,8 @@ module.exports = function start () {
         let fifterConfig = {key:""}
         socket.on('data', (data) => {
             const frame = decodeSocketFrame(data);
-            if(frame.fin===1) {
+            console.log(frame)
+            if(frame.opcode===1) {
                 fifterConfig = JSON.parse(frame.payloadBuf.toString());
             }
         });
