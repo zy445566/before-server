@@ -1,4 +1,7 @@
 <link rel="stylesheet" href="/bootstrap.min.css">
+<template id="req-item-template">
+  <li class="list-group-item req-item"></li>
+</template>
 <div class="container">
   <button type="button" class="btn btn-info go-back-btn">返回</button>
   <button type="button" class="btn btn-danger clear-btn">清空</button>
@@ -14,16 +17,12 @@
 <div class="container my-main">
     <div class="row my-one-row">
       <div class="col-4 my-left-side shadow-sm border">
-        <ul class="list-group list-group-flush">
-          <li class="list-group-item">Cras justo odio</li>
-          <li class="list-group-item">Dapibus ac facilisis in</li>
-          <li class="list-group-item">Morbi leo risus</li>
-          <li class="list-group-item">Porta ac consectetur ac</li>
-          <li class="list-group-item">Vestibulum at eros</li>
+        <h4>请求列表</h4>
+        <ul class="list-group list-group-flush req-list">
         </ul>
       </div>
       <div class="col-8 my-right-side shadow-sm border">
-        数据列表
+        <h4>数据信息</h4>
       </div>
     </div>
 </div>

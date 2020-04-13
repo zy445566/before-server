@@ -1,5 +1,5 @@
 const bsConfig = require('../.bsrc.js');
-const {getConfig, listenCallBack,matchProxyTableKeysUrlIndex, getConfigTipString} = require('../util/index')
+const {getConfig, listenCallBack, getConfigTipString, matchProxyTableKeysUrlIndex} = require('../util/index')
 Object.assign(bsConfig, getConfig());
 const https = require('https');
 const http = require('http');
@@ -43,6 +43,7 @@ async function dealWebRequest(req,res) {
     }
     req.rawBody = await getStreamData(req);
     req.body = Buffer.concat(req.rawBody).toString();
+    req.host = bsConfig.proxyTable[proxyTableKeys[proxyTableIndex]].target;
     return proxy.web(req, res, {
         buffer:streamify(req.rawBody),
         ...bsConfig.proxyTable[proxyTableKeys[proxyTableIndex]],
@@ -72,6 +73,7 @@ module.exports = function start (callback = (data)=>{}) {
                 method:req.method,
                 headers:req.headers,
                 body:req.body,
+                host:req.host,
             },
             res:{
                 headers:proxyRes.headers,

@@ -1,5 +1,5 @@
 const bsConfig = require('../.bsrc.js');
-const {getConfig, listenCallBack,getConfigTipString} = require('../util/index')
+const {getConfig, listenCallBack, getConfigTipString, matchProxyTableKeysUrlIndex} = require('../util/index')
 const {getSecWebSocketAccept, decodeSocketFrame,encodeSocketFrame} = require('../util/websocket')
 Object.assign(bsConfig, getConfig());
 const path = require('path');
@@ -37,7 +37,6 @@ module.exports = function start () {
         let fifterConfig = {key:""}
         socket.on('data', (data) => {
             const frame = decodeSocketFrame(data);
-            console.log(frame)
             if(frame.opcode===1) {
                 fifterConfig = JSON.parse(frame.payloadBuf.toString());
             }
