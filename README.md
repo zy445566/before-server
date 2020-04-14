@@ -74,6 +74,5 @@ npm install before-server -g
 # dir: /your-work-dir
 before-server
 ```
-# 目前基本功能可以使用，但UI还在优化中，目前可尝鲜
 
 
