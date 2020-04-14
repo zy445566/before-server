@@ -1,13 +1,13 @@
 {
   "name": "before-server",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "before server for query client request",
   "main": "index.js",
   "scripts": {
     "build:ui": "npx webpack",
     "bin":"node ./bin/before-server.js",
     "dev": "npm run build:ui && npm run bin",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node ./test.js"
   },
   "bin": {
     "before-server": "./bin/before-server.js"
