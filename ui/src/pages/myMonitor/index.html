@@ -2,6 +2,33 @@
 <template id="req-item-template">
   <li class="list-group-item req-item"></li>
 </template>
+<template id="req-body-template">
+  <div>
+    <h4>通用</h4>
+    <hr/>
+    <ul class="general-header-data"></ul>
+  </div>
+  <div>
+    <h4>请求头</h4>
+    <hr/>
+    <ul class="req-header-data"></ul>
+  </div>
+  <div>
+    <h4>请求数据</h4>
+    <hr/>
+    <pre class="req-body-data"></pre>
+  </div>
+  <div>
+    <h4>返回头</h4>
+    <hr/>
+    <ul class="res-header-data"></ul>
+  </div>
+  <div>
+    <h4>返回数据</h4>
+    <hr/>
+    <pre class="res-body-data"></pre>
+  </div>
+</template>
 <div class="container">
   <button type="button" class="btn btn-info go-back-btn">返回</button>
   <button type="button" class="btn btn-danger clear-btn">清空</button>
@@ -23,9 +50,8 @@
       </div>
       <div class="col-8 my-right-side shadow-sm border">
         <h4>数据信息</h4>
-        <pre class="req-body">
-
-        </pre>
+        <hr/>
+        <div class="req-body"></div>
       </div>
     </div>
 </div>
@@ -39,9 +65,11 @@
 }
 .my-left-side {
   height: 100%;
+  overflow: auto;
 }
 .my-right-side {
   height: 100%;
+  overflow: auto;
 }
 .fifter-text {
   display: inline-block;

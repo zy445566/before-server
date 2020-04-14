@@ -48,7 +48,15 @@ export default class MyHome extends HTMLContent {
             const reqItemTemplate = this.shadow.querySelector("#req-item-template");
             let reqItemTemplateContent = reqItemTemplate.content.cloneNode(true);
             const completeUrl = new URL(`${data.req.host}${data.req.url}`);
-            reqItemTemplateContent.querySelector(".req-item").innerHTML = completeUrl.pathname;
+            let badge = '';
+            if(data.res.statusCode<300) {
+                badge = '<span class="badge badge-pill badge-success">success</span>'
+            } else if(data.res.statusCode<400) {
+                badge = '<span class="badge badge-pill badge-warning">warning</span>'
+            } else {
+                badge = '<span class="badge badge-pill badge-danger">danger</span>'
+            }
+            reqItemTemplateContent.querySelector(".req-item").innerHTML = badge + completeUrl.pathname;
             reqItemTemplateContent.querySelector(".req-item").addEventListener('click',(event)=>{
                 for(const e of reqListDom.children) {e.className = e.className.replace('active','')}
                 if(event.target.className.indexOf('active')==-1) {
@@ -62,8 +70,52 @@ export default class MyHome extends HTMLContent {
     }
 
     showBody(data) {
+        const reqBodyTemplate = this.shadow.querySelector("#req-body-template");
+        let reqBodyTemplateContent = reqBodyTemplate.content.cloneNode(true);
+        // 添加通用状态
+        const generalUl = reqBodyTemplateContent.querySelector(".general-header-data")
+        const requestUrlLi = document.createElement('li');
+        requestUrlLi.innerHTML = data.req.host+data.req.url;
+        generalUl.appendChild(requestUrlLi)
+        const requestMethodLi = document.createElement('li');
+        requestMethodLi.innerHTML = data.req.method;
+        generalUl.appendChild(requestMethodLi)
+        const requestStatusLi = document.createElement('li');
+        requestStatusLi.innerHTML = `${data.req.httpVersion} ${data.res.statusCode}`;
+        generalUl.appendChild(requestStatusLi)
+        // 添加请求头
+        const reqUl = reqBodyTemplateContent.querySelector(".req-header-data")
+        this.addHeadersToUl(data.req.headers,reqUl);
+        // 添加请求数据
+        const reqPre = reqBodyTemplateContent.querySelector(".req-body-data")
+        this.addBodyToPre(data.req.body,reqPre)
+        // 添加返回头
+        const resUl = reqBodyTemplateContent.querySelector(".res-header-data")
+        this.addHeadersToUl(data.res.headers,resUl);
+        // 添加返回数据
+        const resPre = reqBodyTemplateContent.querySelector(".res-body-data")
+        this.addBodyToPre(data.res.body,resPre)
+        // 向右侧body推数据
         const reqBody = this.shadow.querySelector(".req-body");
-        reqBody.innerHTML = JSON.stringify(data,null,2)
+        reqBody.innerHTML = ''
+        reqBody.appendChild(reqBodyTemplateContent)
+    }
+
+    addHeadersToUl(headers,ulEle) {
+        for(const key of Object.keys(headers)) {
+            const headerLi = document.createElement('li');
+            headerLi.innerHTML = `${key} : ${headers[key]}`;
+            ulEle.appendChild(headerLi)
+        }
+    }
+
+    addBodyToPre(strBody, preEle) {
+        if(!strBody) {return preEle.innerHTML = '无数据'}
+        try{
+            preEle.innerHTML = JSON.stringify(JSON.parse(strBody),null,2)
+        } catch(err) {
+            preEle.innerHTML = strBody
+        }
     }
 
     startSocket(config) {
