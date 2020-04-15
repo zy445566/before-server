@@ -10,9 +10,9 @@ export default class MyHome extends HTMLContent {
     async init() {
         const resp = await myRequest.get('/get_config');
         const headContainer = this.shadow.querySelector(".my-haed");
-        headContainer.querySelector('.lead').innerHTML = `通过连接代理服务(
-            http://127.0.0.1:${resp.httpPort}或https://127.0.0.1:${resp.httpsPort}
-        )，监控并转发URL到下面服务地址`
+        headContainer.querySelector('.lead').innerHTML = `前端通过连接代理服务(
+            http://${window.location.hostname}:${resp.httpPort}或https://${window.location.hostname}:${resp.httpsPort}
+        )，实现监控并转发URL到下面服务地址`
         const mainContainer = this.shadow.querySelector(".my-main");
         const proxyKeys = Object.keys(resp.proxyTable);
         if(proxyKeys.length>0) {
