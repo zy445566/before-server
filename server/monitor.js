@@ -40,9 +40,9 @@ module.exports = function start () {
             if(frame.opcode===1) {
                 fifterConfig = JSON.parse(frame.payloadBuf.toString());
             }
-            // if(frame.opcode===8) {
-            //     socket.close()
-            // }
+            if(frame.opcode===8) {
+                socket.end()
+            }
         });
         let sendProxyRequestInfoFunc = function(eventData) {
             if(fifterConfig.key) {
@@ -64,7 +64,6 @@ module.exports = function start () {
             
         }
         socket.on('end', () => {
-            console.log(11111)
             app.removeListener('proxy-request-info', sendProxyRequestInfoFunc);
         });
 
