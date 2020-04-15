@@ -44,9 +44,11 @@ async function dealWebRequest(req,res) {
     }
     req.rawBody = await getStreamData(req);
     req.body = Buffer.concat(req.rawBody).toString();
-    const targetUrlObj = url.parse(bsConfig.proxyTable[proxyTableKeys[proxyTableIndex]].target);
+    const targetUrl = bsConfig.proxyTable[proxyTableKeys[proxyTableIndex]].target;
+    const targetUrlObj = url.parse(targetUrl);
     req.protocol = targetUrlObj.protocol;
     req.host = targetUrlObj.host;
+    req.target = targetUrl;
     req.start_time = new Date().getTime()
     return proxy.web(req, res, {
         buffer:streamify(req.rawBody),
@@ -66,6 +68,7 @@ module.exports = function start (callback = (data)=>{}) {
     httpServer.on('upgrade',dealSocketRequest);
     httpsServer.listen(bsConfig.httpsPort,listenCallBack('proxy','https',`127.0.0.1:${bsConfig.httpsPort}`));
     httpsServer.on('upgrade',dealSocketRequest);
+    const maxBytes = 10*1024*1024;
     proxy.on('proxyRes', async function (proxyRes, req, res) {
         proxyRes.rawBody = await getStreamData(proxyRes);
         proxyRes.body = Buffer.concat(proxyRes.rawBody).toString();
@@ -77,9 +80,10 @@ module.exports = function start (callback = (data)=>{}) {
                 url:req.url,
                 method:req.method,
                 headers:req.headers,
-                body:req.body,
+                body:req.rawBody.length<maxBytes?req.body:'数据过大无法显示',
                 protocol:req.protocol,
                 host:req.host,
+                target:req.target,
                 time:req.end_time-req.start_time
             },
             res:{
@@ -87,7 +91,7 @@ module.exports = function start (callback = (data)=>{}) {
                 trailers:proxyRes.trailers,
                 statusCode:proxyRes.statusCode,
                 statusMessage:proxyRes.statusMessage,
-                body:proxyRes.body,
+                body:proxyRes.rawBody.length<maxBytes?proxyRes.body:'数据过大无法显示',
             }
         })
     });

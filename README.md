@@ -27,17 +27,27 @@
 module.exports = {
     proxyTable:{ 
         // 这里代理的优先级，前者高于后者，如果想全访问，直接使用/即可
+        /**
+         * http://proxyhost/api1/1 
+         * 代理将转发到=> 
+         * http://www.aaa.com/api1/1
+         */
         '/api1': {
-            target: 'http://127.0.0.1:3000' //当访问api1开头的url要代理的开发服务
+            target: 'http://www.aaa.com' //当访问代理的api1开头的url要代理的开发服务
         },
-        '/api': {
-            target: 'http://127.0.0.1:3443/apis'//当访问api开头的url要代理的开发服务
+        /**
+         * http://proxyhost/api2/1 
+         * 此配置代理将转发到=> 
+         * http://www.aaa.com/api3/api2/1 
+         */
+        '/api2': {
+            target: 'https://www.bbb.com/api3' //当访问代理的api2开头的url要代理的开发服务
         },
-        '/ws/api': {
-            target: 'ws://127.0.0.1:3000/ws'//当访问/ws/api开头的url要代理的开发服务
+        '/ws1': {
+            target: 'ws://www.ccc.com'//当访问/ws/api开头的url要代理的开发服务
         },
-        '/ws': {
-            target: 'wss://127.0.0.1:3000/ws/api'//当访问/ws开头的url要代理的开发服务
+        '/ws2': {
+            target: 'ws://www.ddd.com'//当访问/ws开头的url要代理的开发服务
         }
     },
     httpPort:8000, // http代理服务的端口
