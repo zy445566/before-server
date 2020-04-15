@@ -28,17 +28,17 @@ module.exports.matchProxyTableKeysUrlIndex = function(url,proxyTableKeys=[]) {
 module.exports.getConfigTipString = function() {
     return `请配置当前工作目录的.bsrc.js文件(${process.cwd()}${path.sep}.bsrc.js)配置项proxyTable后重启服务，例子如下\n\n` +JSON.stringify({
         proxyTable:{
-            '/': {
+            '/api1': {
                 target: 'http://www.aaa.com'
             },
             '/api': {
-                target: 'https://www.bbb.com/api'
+                target: 'https://www.bbb.com'
             },
             '/ws': {
-                target: 'ws://www.ccc.com/ws'
+                target: 'ws://www.ccc.com'
             },
             '/ws/api': {
-                target: 'wss://www.ddd.com/ws/api'
+                target: 'wss://www.ddd.com'
             }
         }
     },null,2)
