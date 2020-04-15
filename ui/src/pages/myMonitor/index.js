@@ -47,7 +47,7 @@ export default class MyHome extends HTMLContent {
         this.showReqList.map((data)=>{
             const reqItemTemplate = this.shadow.querySelector("#req-item-template");
             let reqItemTemplateContent = reqItemTemplate.content.cloneNode(true);
-            const completeUrl = new URL(`${data.req.host}${data.req.url}`);
+            const completeUrl = new URL(`${data.req.protocol}//${data.req.host}${data.req.url}`);
             let badge = '';
             if(data.res.statusCode<300) {
                 badge = '<span class="badge badge-pill badge-success">success</span>'
@@ -75,7 +75,7 @@ export default class MyHome extends HTMLContent {
         // 添加通用状态
         const generalUl = reqBodyTemplateContent.querySelector(".general-header-data")
         const requestUrlLi = document.createElement('li');
-        requestUrlLi.innerHTML = `请求地址 : ${data.req.host+data.req.url}`;
+        requestUrlLi.innerHTML = `请求地址 : ${data.req.protocol}//${data.req.host}${data.req.url}`;
         generalUl.appendChild(requestUrlLi)
         const requestMethodLi = document.createElement('li');
         requestMethodLi.innerHTML = `请求方式 : ${data.req.method}`;
@@ -129,7 +129,7 @@ export default class MyHome extends HTMLContent {
 
     downloadApiMarkdown(data) {
         const renderData = {}
-        const completeUrl = new URL(`${data.req.host}${data.req.url}`);
+        const completeUrl = new URL(`${data.req.protocol}//${data.req.host}${data.req.url}`);
         const pathnameList = completeUrl.pathname.split('/');
         renderData.title = pathnameList[pathnameList.length-1];
         renderData.method = data.req.method;
