@@ -81,7 +81,8 @@ export default class MyHome extends HTMLContent {
         requestMethodLi.innerHTML = `请求方式 : ${data.req.method}`;
         generalUl.appendChild(requestMethodLi)
         const requestStatusLi = document.createElement('li');
-        requestStatusLi.innerHTML = `状态 : ${data.req.httpVersion} ${data.res.statusCode}`;
+        console.log(data.res.statusCode)
+        requestStatusLi.innerHTML = `状态 : HTTP ${data.req.httpVersion} ${data.res.statusCode}`;
         generalUl.appendChild(requestStatusLi)
         const requestTimeLi = document.createElement('li');
         requestTimeLi.innerHTML = `消耗时间 : ${data.req.time} ms`;
