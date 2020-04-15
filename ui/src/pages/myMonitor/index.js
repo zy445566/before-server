@@ -1,6 +1,6 @@
 import indexHtml from './index.html'
 import {getQuery} from '@/components/MyRouter'
-import myRequest from '@/components/MyRequest'
+import apiMarkDownTemplate from './api-template.md'
 import HTMLContent from '@/components/HTMLContent'
 export default class MyHome extends HTMLContent {
     constructor() {
@@ -75,14 +75,19 @@ export default class MyHome extends HTMLContent {
         // 添加通用状态
         const generalUl = reqBodyTemplateContent.querySelector(".general-header-data")
         const requestUrlLi = document.createElement('li');
-        requestUrlLi.innerHTML = data.req.host+data.req.url;
+        requestUrlLi.innerHTML = `请求地址 : ${data.req.host+data.req.url}`;
         generalUl.appendChild(requestUrlLi)
         const requestMethodLi = document.createElement('li');
-        requestMethodLi.innerHTML = data.req.method;
+        requestMethodLi.innerHTML = `请求方式 : ${data.req.method}`;
         generalUl.appendChild(requestMethodLi)
         const requestStatusLi = document.createElement('li');
-        requestStatusLi.innerHTML = `${data.req.httpVersion} ${data.res.statusCode}`;
+        requestStatusLi.innerHTML = `状态 : ${data.req.httpVersion} ${data.res.statusCode}`;
         generalUl.appendChild(requestStatusLi)
+        const requestTimeLi = document.createElement('li');
+        requestTimeLi.innerHTML = `消耗时间 : ${data.req.time} ms`;
+        generalUl.appendChild(requestTimeLi)
+        const downloadApiMarkdownBtn = reqBodyTemplateContent.querySelector(".download-api-markdown");
+        downloadApiMarkdownBtn.addEventListener('click',(event)=>{this.downloadApiMarkdown(data)})
         // 添加请求头
         const reqUl = reqBodyTemplateContent.querySelector(".req-header-data")
         this.addHeadersToUl(data.req.headers,reqUl);
@@ -110,12 +115,41 @@ export default class MyHome extends HTMLContent {
     }
 
     addBodyToPre(strBody, preEle) {
-        if(!strBody) {return preEle.innerHTML = '无数据'}
+        preEle.innerHTML = this.getBodyDataStr(strBody);
+    }
+
+    getBodyDataStr(strBody) {
+        if(!strBody) {return  '无数据'}
         try{
-            preEle.innerHTML = JSON.stringify(JSON.parse(strBody),null,2)
+            return JSON.stringify(JSON.parse(strBody),null,2)
         } catch(err) {
-            preEle.innerHTML = strBody
+            return strBody
         }
+    }
+
+    downloadApiMarkdown(data) {
+        const renderData = {}
+        const completeUrl = new URL(`${data.req.host}${data.req.url}`);
+        const pathnameList = completeUrl.pathname.split('/');
+        renderData.title = pathnameList[pathnameList.length-1];
+        renderData.method = data.req.method;
+        if(renderData.method.toLowerCase()==='get') {
+            renderData.url = completeUrl.pathname;
+            renderData.paramsData = completeUrl.search
+        } else {
+            renderData.url = data.req.url
+            renderData.paramsData = this.getBodyDataStr(data.req.body)
+        }
+        renderData.resData = this.getBodyDataStr(data.res.body);
+        const downloadA = document.createElement('a')
+        downloadA.download = `${renderData.title}.md`
+        downloadA.style.display = 'none';
+        const downloadStrData = eval('`'+apiMarkDownTemplate.replace(/`/g,'\\`')+'`;')
+        const blob = new Blob([downloadStrData])
+        downloadA.href = URL.createObjectURL(blob)
+        this.shadow.appendChild(downloadA)
+        downloadA.click()
+        this.shadow.removeChild(downloadA)
     }
 
     startSocket(config) {

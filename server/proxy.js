@@ -44,6 +44,7 @@ async function dealWebRequest(req,res) {
     req.rawBody = await getStreamData(req);
     req.body = Buffer.concat(req.rawBody).toString();
     req.host = bsConfig.proxyTable[proxyTableKeys[proxyTableIndex]].target;
+    req.start_time = new Date().getTime()
     return proxy.web(req, res, {
         buffer:streamify(req.rawBody),
         ...bsConfig.proxyTable[proxyTableKeys[proxyTableIndex]],
@@ -65,6 +66,7 @@ module.exports = function start (callback = (data)=>{}) {
     proxy.on('proxyRes', async function (proxyRes, req, res) {
         proxyRes.rawBody = await getStreamData(proxyRes);
         proxyRes.body = Buffer.concat(proxyRes.rawBody).toString();
+        req.end_time = new Date().getTime()
         callback({
             req:{
                 httpVersion:req.httpVersion,
@@ -74,6 +76,7 @@ module.exports = function start (callback = (data)=>{}) {
                 headers:req.headers,
                 body:req.body,
                 host:req.host,
+                time:req.end_time-req.start_time
             },
             res:{
                 headers:proxyRes.headers,

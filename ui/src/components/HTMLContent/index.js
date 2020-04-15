@@ -8,7 +8,7 @@ export default class HTMLContent extends HTMLElement {
         for(const key of Object.keys(dataObj)) {
             dataStr+=`const ${key} = dataObj.${key};`
         }
-        return eval(dataStr+'`'+htmlStr+'`;');
+        return eval(dataStr+'`'+htmlStr.replace(/`/g,'\\`')+'`;');
     }
     render(htmlStr,dataObj={}) {
         if(!this.shadow) {this.shadow = this.attachShadow( { mode: 'closed' } );}
