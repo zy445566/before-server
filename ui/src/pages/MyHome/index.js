@@ -12,7 +12,7 @@ export default class MyHome extends HTMLContent {
         const headContainer = this.shadow.querySelector(".my-haed");
         headContainer.querySelector('.lead').innerHTML = `前端通过连接代理服务(
             http://${window.location.hostname}:${resp.httpPort}或https://${window.location.hostname}:${resp.httpsPort}
-        )，实现监控并转发URL到下面服务地址`
+        )，实现监控并转发URL到下面服务地址。<br/><a href="https://github.com/zy445566/before-server">before-server源码地址</a>`
         const mainContainer = this.shadow.querySelector(".my-main");
         const proxyKeys = Object.keys(resp.proxyTable);
         if(proxyKeys.length>0) {
