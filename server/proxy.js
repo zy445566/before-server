@@ -69,6 +69,34 @@ module.exports = function start (callback = (data)=>{}) {
     httpsServer.listen(bsConfig.httpsPort,listenCallBack('proxy','https',`127.0.0.1:${bsConfig.httpsPort}`));
     httpsServer.on('upgrade',dealSocketRequest);
     const maxBytes = 10*1024*1024;
+    proxy.on('error', async function (e, req, res) {
+        const msg = '请求超时，请检查目标地址是否可用';
+        callback({
+            req:{
+                httpVersion:req.httpVersion,
+                headers:req.headers,
+                url:req.url,
+                method:req.method,
+                headers:req.headers,
+                body:req.rawBody.length<maxBytes?req.body:'数据过大无法显示',
+                protocol:req.protocol,
+                host:req.host,
+                target:req.target,
+                time:0
+            },
+            res:{
+                headers:{},
+                trailers:{},
+                statusCode:500,
+                statusMessage:'OutTime',
+                body:msg,
+            }
+        })
+        res.writeHead(500, {
+            'Content-Type': 'text/plain'
+        });
+        res.end(msg);
+    })
     proxy.on('proxyRes', async function (proxyRes, req, res) {
         proxyRes.rawBody = await getStreamData(proxyRes);
         proxyRes.body = Buffer.concat(proxyRes.rawBody).toString();

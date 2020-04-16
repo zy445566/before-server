@@ -180,6 +180,11 @@ export default class MyHome extends HTMLContent {
         if(this.ws) {
             this.ws.close()
         }
-        localStorage.setItem(this.getDataKey(this.key),JSON.stringify(this.reqList))
+        if(this.reqList.length>15) {
+            localStorage.setItem(this.getDataKey(this.key),JSON.stringify(this.reqList.slice(this.reqList.length-15)))
+        } else {
+            localStorage.setItem(this.getDataKey(this.key),JSON.stringify(this.reqList))
+        }
+        
     }
 }
