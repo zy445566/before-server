@@ -85,5 +85,11 @@ npm install before-server -g
 before-server
 ```
 
+# 功能截图
+
+![首页](https://raw.githubusercontent.com/zy445566/zy445566.github.io/master/before-server/home.png)
+![监控页面](https://raw.githubusercontent.com/zy445566/zy445566.github.io/master/before-server/monitor.png)
+
+
 # 关于
 Power By @Web Components
