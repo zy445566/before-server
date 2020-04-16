@@ -10,7 +10,8 @@ export default class MyHome extends HTMLContent {
         this.reqList = []
         this.showReqList = [];
         this.fifterText = '';
-        this.render(indexHtml)
+        this.render(indexHtml);
+        this.addStyleSheets(document.styleSheets);
         this.init();
         this.addListen();
     }

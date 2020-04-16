@@ -8,6 +8,7 @@ class AppContainer extends HTMLContent {
     constructor() {
         super();
         this.render(appHtml)
+        this.addStyleSheets(document.styleSheets)
     }
 }
 window.customElements.define('app-container', AppContainer);

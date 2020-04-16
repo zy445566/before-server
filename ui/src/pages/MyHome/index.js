@@ -4,7 +4,8 @@ import HTMLContent from '@/components/HTMLContent'
 export default class MyHome extends HTMLContent {
     constructor() {
         super();
-        this.render(indexHtml)
+        this.render(indexHtml);
+        this.addStyleSheets(document.styleSheets);
         this.init();
     }
     async init() {
