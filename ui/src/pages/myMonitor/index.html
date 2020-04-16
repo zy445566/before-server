@@ -35,15 +35,20 @@
   </div>
 </template>
 <div class="container">
-  <button type="button" class="btn btn-info go-back-btn">返回</button>
-  <button type="button" class="btn btn-danger clear-btn">清空</button>
-  <div class="fifter-text">
-    <div class="input-group">
-      <div class="input-group-prepend">
-        <span class="input-group-text">过滤</span>
+  <div class="row my-head-row">
+    <button type="button" class="btn btn-info go-back-btn">返回</button>
+    &nbsp;
+    <button type="button" class="btn btn-danger clear-btn">清空</button>
+    &nbsp;
+    <div class="fifter-text">
+      <div class="input-group">
+        <div class="input-group-prepend">
+          <span class="input-group-text">过滤</span>
+        </div>
+        <input type="text" class="form-control fifter-text-input" placeholder="请输入过滤请求的Url">
       </div>
-      <input type="text" class="form-control fifter-text-input" placeholder="请输入过滤请求的Url">
     </div>
+    &nbsp;
   </div>
 </div>
 <div class="container my-main">
@@ -67,6 +72,9 @@
 }
 .req-item {
   cursor: pointer;
+}
+.my-head-row {
+  padding-top: 10px;
 }
 .my-one-row {
   height: 100%;
