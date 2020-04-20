@@ -64,11 +64,11 @@ export default class MyHome extends HTMLContent {
             const completeUrl = new URL(`${data.req.target}${data.req.url}`);
             let badge = '';
             if(data.res.statusCode<300) {
-                badge = '<span class="badge badge-pill badge-success">success</span>'
+                badge = `<span class="badge badge-pill badge-success">${data.res.statusCode}</span>`
             } else if(data.res.statusCode<400) {
-                badge = '<span class="badge badge-pill badge-warning">warning</span>'
+                badge = `<span class="badge badge-pill badge-warning">${data.res.statusCode}</span>`
             } else {
-                badge = '<span class="badge badge-pill badge-danger">danger</span>'
+                badge = `<span class="badge badge-pill badge-danger">${data.res.statusCode}</span>`
             }
             reqItemTemplateContent.querySelector(".req-item").innerHTML = badge + completeUrl.pathname;
             reqItemTemplateContent.querySelector(".req-item").addEventListener('click',(event)=>{
