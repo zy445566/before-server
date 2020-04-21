@@ -38,9 +38,12 @@ function getStreamData(stream) {
 async function dealWebRequest(req,res) {
     const proxyTableKeys = Object.keys(bsConfig.proxyTable)
     const proxyTableIndex = matchProxyTableKeysUrlIndex(req.url,proxyTableKeys)
-    if(proxyTableKeys.length<=0 && proxyTableIndex<0){
+    if(proxyTableKeys.length<=0){
         res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
         return res.end(getConfigTipString())
+    }
+    if(proxyTableIndex<0) {
+        return res.end(`当前URL:${req.url}匹配索引${proxyTableIndex}失败，请在工作目录的.bsrc.js文件配置当前路径的转发`)
     }
     req.rawBody = await getStreamData(req);
     req.body = Buffer.concat(req.rawBody).toString();

@@ -16,9 +16,9 @@ module.exports.getConfig = function() {
 
 module.exports.matchProxyTableKeysUrlIndex = function(url,proxyTableKeys=[]) {
     let index = -1
-    for(const key of proxyTableKeys) {
-        index = url.indexOf(key);
-        if(index>=0) {
+    for(let i=0;i<proxyTableKeys.length;i++) {
+        if(url.indexOf(proxyTableKeys[i])>=0) {
+            index = i;
             return index;
         }
     }
@@ -26,5 +26,5 @@ module.exports.matchProxyTableKeysUrlIndex = function(url,proxyTableKeys=[]) {
 }
 const configTpStr = fs.readFileSync(path.join(__dirname,'config.tp')).toString();
 module.exports.getConfigTipString = function() {
-    return `请配置当前工作目录的.bsrc.js文件(${process.cwd()}${path.sep}.bsrc.js)配置项proxyTable后重启服务，例子如下\n\n`+configTpStr;
+    return `请配置工作目录的.bsrc.js文件(${process.cwd()}${path.sep}.bsrc.js)配置项proxyTable后重启服务，例子如下\n\n`+configTpStr;
 }
