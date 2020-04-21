@@ -35,7 +35,8 @@ module.exports = {
          * http://www.aaa.com/api1/1
          */
         '/api1': {
-            target: 'http://www.aaa.com' //当访问代理的api1开头的url要代理的开发服务
+            target: 'http://www.aaa.com', //当访问代理的api1开头的url要代理的开发服务
+            cors:true // 如果要配置cors跨域可以在这里设置
         },
         /**
          * http://proxyhost/api2/1 
@@ -62,7 +63,7 @@ module.exports = {
 const fs =require('fs');
 const path =require('path');
 module.exports = {
-    // 这是自带的证书，一般你不续要配置
+    // 这是自带的证书，一般你不需要配置
     ssl: {
             key: fs.readFileSync(path.join(__dirname,'keys','key.pem'), 'utf8'),
             cert: fs.readFileSync(path.join(__dirname,'keys','cert.pem'), 'utf8')

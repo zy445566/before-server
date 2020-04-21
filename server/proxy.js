@@ -44,15 +44,17 @@ async function dealWebRequest(req,res) {
     }
     req.rawBody = await getStreamData(req);
     req.body = Buffer.concat(req.rawBody).toString();
-    const targetUrl = bsConfig.proxyTable[proxyTableKeys[proxyTableIndex]].target;
+    const proxyConfig = bsConfig.proxyTable[proxyTableKeys[proxyTableIndex]];
+    const targetUrl = proxyConfig.target;
     const targetUrlObj = url.parse(targetUrl);
     req.protocol = targetUrlObj.protocol;
     req.host = targetUrlObj.host;
     req.target = targetUrl;
-    req.start_time = new Date().getTime()
+    req.start_time = new Date().getTime();
+    res.cors = proxyConfig.cors;
     return proxy.web(req, res, {
         buffer:streamify(req.rawBody),
-        ...bsConfig.proxyTable[proxyTableKeys[proxyTableIndex]],
+        ...proxyConfig,
     });
     
 }
@@ -69,6 +71,7 @@ module.exports = function start (callback = (data)=>{}) {
     httpsServer.listen(bsConfig.httpsPort,listenCallBack('proxy','https',`127.0.0.1:${bsConfig.httpsPort}`));
     httpsServer.on('upgrade',dealSocketRequest);
     const maxBytes = 10*1024*1024;
+    const maxCorsTime = 30*24*60*60;
     proxy.on('error', async function (e, req, res) {
         const msg = '请求超时，请检查目标地址是否可用';
         callback({
@@ -98,6 +101,17 @@ module.exports = function start (callback = (data)=>{}) {
         res.end(msg);
     })
     proxy.on('proxyRes', async function (proxyRes, req, res) {
+        if(res.cors) {
+            res.setHeader('Access-Control-Allow-Origin','*');
+            res.setHeader('Access-Control-Expose-Headers',Object.keys(proxyRes.headers).join(','));
+            res.setHeader('Access-Control-Max-Age',maxCorsTime);
+            res.setHeader('Access-Control-Allow-Credentials','true');
+            res.setHeader('Access-Control-Allow-Methods',[
+                'POST', 'GET', 'HEAD','PUT','DELETE',
+                'CONNECT','OPTIONS','TRACE','PATCH'
+            ].join(','));
+            res.setHeader('Access-Control-Allow-Headers',Object.keys(proxyRes.headers).join(','));
+        }
         proxyRes.rawBody = await getStreamData(proxyRes);
         proxyRes.body = Buffer.concat(proxyRes.rawBody).toString();
         req.end_time = new Date().getTime()
