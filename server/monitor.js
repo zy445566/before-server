@@ -48,11 +48,13 @@ module.exports = function start () {
             if(fifterConfig.key) {
                 const proxyTableIndex = matchProxyTableKeysUrlIndex(eventData.req.url,proxyTableKeys);
                 if(proxyTableIndex>=0) {
-                    socket.write(encodeSocketFrame({
-                        fin:1,
-                        opcode:1,
-                        payloadBuf:Buffer.from(JSON.stringify(eventData))
-                    }))
+                    if(fifterConfig.key===proxyTableKeys[proxyTableIndex]) {
+                        socket.write(encodeSocketFrame({
+                            fin:1,
+                            opcode:1,
+                            payloadBuf:Buffer.from(JSON.stringify(eventData))
+                        }))
+                    }
                 }
             } else {
                 socket.write(encodeSocketFrame({
