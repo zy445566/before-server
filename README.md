@@ -85,7 +85,7 @@ npm install before-server -g
 # 0x3在工作目录启动服务即可
 ```sh
 # dir: /your-work-dir
-before-server
+before-server # or `npx before-server` 
 ```
 
 # 功能截图
