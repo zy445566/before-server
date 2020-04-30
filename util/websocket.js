@@ -74,11 +74,11 @@ module.exports.encodeSocketFrame = function (frame){
     if(bufBits>=126) {
         //65536是2**16即两字节数字极限
         if(bufBits>=65536) {
-            extBuf = Buffer.allocUnsafe(8);
+            extBuf = Buffer.alloc(8);
             extBuf.writeUInt32BE(bufBits, 4);
             payloadLen = 127;
         } else {
-            extBuf = Buffer.allocUnsafe(2);
+            extBuf = Buffer.alloc(2);
             extBuf.writeUInt16BE(bufBits, 0);
             payloadLen = 126;
         }
