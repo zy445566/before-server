@@ -175,11 +175,21 @@ export default class MyHome extends HTMLContent {
             this.reqList.push(JSON.parse(evt.data));
             this.reRenderShow()
         };
+        this.ws.onclose = () => {
+            if(!this.ws.closeBySelf) {
+                if(confirm('连接已断开是否重连')){
+                    this.startSocket(config);
+                } else {
+                    this.goHome()
+                }
+            }
+        };
     }
 
     disconnectedCallback() {
         if(this.ws) {
-            this.ws.close()
+            this.ws.closeBySelf = true;
+            this.ws.close();
         }
         if(this.reqList.length>15) {
             localStorage.setItem(this.getDataKey(this.key),JSON.stringify(this.reqList.slice(this.reqList.length-15)))
