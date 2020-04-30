@@ -58,7 +58,25 @@ module.exports = {
     monitorPort:8555,// 监控服务端口服务的端口
 }
 ```
-`.bsrc.js`的默认配置如下：
+## 0x2安装全局包
+```sh
+# 这里也可以使用yarn
+npm install before-server -g
+```
+## 0x3在工作目录启动服务即可
+```sh
+# dir: /your-work-dir
+before-server # or `npx before-server` 
+```
+
+# 功能截图
+
+![首页](https://raw.githubusercontent.com/zy445566/zy445566.github.io/master/before-server/home.png)
+![监控页面](https://raw.githubusercontent.com/zy445566/zy445566.github.io/master/before-server/monitor.png)
+
+
+# `.bsrc.js`文件的默认配置
+以下是`.bsrc.js`文件的默认配置，手动配置项会合并进默认配置项
 ```js
 const fs =require('fs');
 const path =require('path');
@@ -77,22 +95,6 @@ module.exports = {
     monitorPort:8555, // 监控服务端口服务的端口
 }
 ```
-## 0x2安装全局包
-```sh
-# 这里也可以使用yarn
-npm install before-server -g
-```
-# 0x3在工作目录启动服务即可
-```sh
-# dir: /your-work-dir
-before-server # or `npx before-server` 
-```
-
-# 功能截图
-
-![首页](https://raw.githubusercontent.com/zy445566/zy445566.github.io/master/before-server/home.png)
-![监控页面](https://raw.githubusercontent.com/zy445566/zy445566.github.io/master/before-server/monitor.png)
-
 
 # 关于
 通过代理请求实现请求监控的工具，解决了移动端、Web端SSR、小程序很多请求无法直接通过浏览器查看请求数据的痛点。
