@@ -89,6 +89,7 @@ module.exports.encodeSocketFrame = function (frame){
     if(bufBits>=126) {
         frameBufList.push(...extBuf);
     }
-    frameBufList.push(...frame.payloadBuf)
-    return Buffer.from(frameBufList)
+    // 修复在高版本nodejs中数组会引用原值导致递归错误
+    // frameBufList.push(...frame.payloadBuf);
+    return Buffer.concat([Buffer.from(frameBufList), frame.payloadBuf]);
 }
