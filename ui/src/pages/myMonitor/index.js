@@ -177,7 +177,7 @@ export default class MyHome extends HTMLContent {
         };
         this.ws.onclose = () => {
             if(!this.ws.closeBySelf) {
-                if(confirm('连接已断开是否重连?可能是太久没有使用到资源，出于节流考虑自动关闭了。')){
+                if(confirm('连接已断开是否重连?\r\n可能是太久没有使用到资源，出于节流考虑自动关闭了。')){
                     this.startSocket(config);
                 } else {
                     this.goHome()
