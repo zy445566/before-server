@@ -6,7 +6,7 @@
          * http://www.aaa.com/api1/1
          */
         '/api1': {
-            target: 'http://www.aaa.com',
+            target: 'http://www.aaa.com', //你的测试域名
             cors:true // 如果要配置cors跨域可以在这里设置
         },
         /**

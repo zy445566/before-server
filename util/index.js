@@ -2,7 +2,12 @@ const fs =require('fs');
 const path =require('path');
 module.exports.listenCallBack = function(type,protocol,hostname) {
     return ()=>{
-        console.log(`${type} server listening ${protocol}://${hostname}/`)
+        if(type==='proxy') {
+            console.log(`${type} ${protocol} server listening ${protocol}://${hostname}/`)
+        } else {
+            console.log(`${type} server listening ${protocol}://${hostname}/`)
+        }
+        
     }
 }
 
