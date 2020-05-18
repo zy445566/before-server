@@ -35,8 +35,9 @@ module.exports = {
          * http://www.aaa.com/api1/1
          */
         '/api1': {
-            target: 'http://www.aaa.com', //当访问代理的api1开头的url要代理的开发服务
-            cors:true // 如果要配置cors跨域可以在这里设置
+            target: 'http://www.aaa.com', //你的测试域名,当访问代理的api1开头的url要代理的开发服务
+            cors:true, // 如果要配置cors跨域可以在这里设置
+            changeOrigin: true, // 如果后端对域名有识别，可以配置这个
         },
         /**
          * http://proxyhost/api2/1 
