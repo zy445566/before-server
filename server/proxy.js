@@ -1,5 +1,9 @@
 const bsConfig = require('../.bsrc.js');
-const {getConfig, listenCallBack, getConfigTipString, matchProxyTableKeysUrlIndex} = require('../util/index')
+const {
+    getConfig, listenCallBack, getConfigTipString, 
+    matchProxyTableKeysUrlIndex,writeDataToFile,
+    clearFileData
+} = require('../util/index')
 Object.assign(bsConfig, getConfig());
 const https = require('https');
 const http = require('http');
@@ -84,6 +88,7 @@ module.exports = function start (callback = (data)=>{}) {
                 url:req.url,
                 method:req.method,
                 headers:req.headers,
+                bodyUrl:req.rawBody.length<maxBytes?null:await writeDataToFile(req.rawBody,'req'),
                 body:req.rawBody.length<maxBytes?req.body:'数据过大无法显示',
                 protocol:req.protocol,
                 host:req.host,
@@ -125,6 +130,7 @@ module.exports = function start (callback = (data)=>{}) {
                 url:req.url,
                 method:req.method,
                 headers:req.headers,
+                bodyUrl:req.rawBody.length<maxBytes?null:await writeDataToFile(req.rawBody,'req'),
                 body:req.rawBody.length<maxBytes?req.body:'数据过大无法显示',
                 protocol:req.protocol,
                 host:req.host,
@@ -136,8 +142,14 @@ module.exports = function start (callback = (data)=>{}) {
                 trailers:proxyRes.trailers,
                 statusCode:proxyRes.statusCode,
                 statusMessage:proxyRes.statusMessage,
+                bodyUrl:proxyRes.rawBody.length<maxBytes?null:await writeDataToFile(proxyRes.rawBody,'res'),
                 body:proxyRes.rawBody.length<maxBytes?proxyRes.body:'数据过大无法显示',
             }
         })
     });
+    const clearFileTime = 24*3600*1000;
+    clearFileData(clearFileTime)
+    setInterval(()=>{
+        clearFileData(clearFileTime)
+    }, clearFileTime)
 }

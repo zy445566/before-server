@@ -1,5 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const {getStaticPath} = require('./util/index')
 // const webpack = require('webpack');
 
 module.exports = {
@@ -7,7 +8,7 @@ module.exports = {
   mode: 'development', // production
   entry: './ui/src/app.js',
   output: {
-    path: path.join(__dirname, 'server/static'),
+    path: getStaticPath(),
     filename: 'webpack.bundle.js'
   },
   resolve: {

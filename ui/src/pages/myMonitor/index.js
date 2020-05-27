@@ -113,7 +113,12 @@ export default class MyHome extends HTMLContent {
         this.addHeadersToUl(data.res.headers,resUl);
         // 添加返回数据
         const resPre = reqBodyTemplateContent.querySelector(".res-body-data")
-        this.addBodyToPre(data.res.body,resPre)
+        if(data.res.bodyUrl) {
+            const resDiv = reqBodyTemplateContent.querySelector(".res-body-data-div")
+            resDiv.innerHTML=`<a class="btn btn-primary" href="/${data.res.bodyUrl}" role="button">下载数据内容</a>`
+        } else {
+            this.addBodyToPre(data.res.body,resPre)
+        }
         // 向右侧body推数据
         const reqBody = this.shadow.querySelector(".req-body");
         reqBody.innerHTML = ''
