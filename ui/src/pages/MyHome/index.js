@@ -1,6 +1,6 @@
 import indexHtml from './index.html'
-import myRequest from '@/components/MyRequest'
-import HTMLContent from '@/components/HTMLContent'
+import myRequest from '@/components/MyRequest/index.js'
+import HTMLContent from '@/components/HTMLContent/index.js'
 export default class MyHome extends HTMLContent {
     constructor() {
         super();

@@ -1,4 +1,4 @@
-import HTMLContent from '@/components/HTMLContent'
+import HTMLContent from '@/components/HTMLContent/index.js'
 export default class MyHashRoute extends HTMLContent {
     constructor() {
         super();

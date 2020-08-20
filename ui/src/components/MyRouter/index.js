@@ -1,4 +1,4 @@
-import HTMLContent from '@/components/HTMLContent'
+import HTMLContent from '@/components/HTMLContent/index.js'
 export default class MyRouter extends HTMLContent {
     constructor() {
         super();

@@ -1,13 +1,13 @@
 {
   "name": "before-server",
-  "version": "1.0.34",
+  "version": "1.0.35",
   "description": "before server for query client request",
   "main": "index.js",
   "scripts": {
-    "build:ui": "npx webpack",
+    "build:ui": "npx rollup -c",
     "prepare": "npm run build:ui",
     "bin": "node ./bin/before-server.js",
-    "dev:ui": "npx webpack --watch",
+    "dev:ui": "npx rollup -c --watch",
     "dev:server": "nodemon ./bin/before-server.js",
     "test": "node ./test.js"
   },
@@ -38,10 +38,10 @@
     "stream-array": "^1.1.2"
   },
   "devDependencies": {
-    "html-loader": "^1.1.0",
-    "html-webpack-plugin": "^4.0.4",
+    "@rollup/plugin-alias": "^3.1.1",
     "nodemon": "^2.0.4",
-    "webpack": "^4.42.1",
-    "webpack-cli": "^3.3.11"
+    "rollup": "^2.26.4",
+    "rollup-plugin-html": "^0.2.1",
+    "rollup-plugin-md": "0.0.7"
   }
 }

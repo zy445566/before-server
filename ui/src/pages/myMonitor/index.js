@@ -1,7 +1,7 @@
 import indexHtml from './index.html'
-import {getQuery} from '@/components/MyRouter'
+import {getQuery} from '@/components/MyRouter/index.js'
 import apiMarkDownTemplate from './api-template.md'
-import HTMLContent from '@/components/HTMLContent'
+import HTMLContent from '@/components/HTMLContent/index.js'
 export default class MyHome extends HTMLContent {
     constructor() {
         super();
@@ -163,8 +163,8 @@ export default class MyHome extends HTMLContent {
         const downloadA = document.createElement('a')
         downloadA.download = `${renderData.title}.md`
         downloadA.style.display = 'none';
-        const downloadStrData = eval('`'+apiMarkDownTemplate.replace(/`/g,'\\`')+'`;')
-        const blob = new Blob([downloadStrData])
+        const compileApiMarkDownTemplate= new Function('renderData', 'return `'+apiMarkDownTemplate.replace(/`/g,'\\`')+'`;');
+        const blob = new Blob([compileApiMarkDownTemplate(renderData)])
         downloadA.href = URL.createObjectURL(blob)
         this.shadow.appendChild(downloadA)
         downloadA.click()

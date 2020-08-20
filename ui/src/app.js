@@ -1,9 +1,9 @@
 import appHtml from '@/app.html'
-import HTMLContent from '@/components/HTMLContent'
-import MyHashRoute from '@/components/MyHashRoute'
-import MyRouter from '@/components/MyRouter'
-import MyHome from '@/pages/MyHome'
-import myMonitor from '@/pages/myMonitor'
+import HTMLContent from '@/components/HTMLContent/index.js'
+import MyHashRoute from '@/components/MyHashRoute/index.js'
+import MyRouter from '@/components/MyRouter/index.js'
+import MyHome from '@/pages/MyHome/index.js'
+import myMonitor from '@/pages/myMonitor/index.js'
 class AppContainer extends HTMLContent {
     constructor() {
         super();
