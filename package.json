@@ -7,7 +7,8 @@
     "build:ui": "npx webpack",
     "prepare": "npm run build:ui",
     "bin": "node ./bin/before-server.js",
-    "dev": "npm run build:ui && npm run bin",
+    "dev:ui": "npx webpack --watch",
+    "dev:server": "nodemon ./bin/before-server.js",
     "test": "node ./test.js"
   },
   "bin": {
@@ -39,6 +40,7 @@
   "devDependencies": {
     "html-loader": "^1.1.0",
     "html-webpack-plugin": "^4.0.4",
+    "nodemon": "^2.0.4",
     "webpack": "^4.42.1",
     "webpack-cli": "^3.3.11"
   }
