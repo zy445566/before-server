@@ -31,7 +31,7 @@
   },
   "homepage": "https://github.com/zy445566/before-server#readme",
   "dependencies": {
-    "http-proxy": "^1.18.0",
+    "http-proxy": "^1.18.1",
     "koa": "^2.11.0",
     "koa-router": "^8.0.8",
     "koa-static": "^5.0.0",
