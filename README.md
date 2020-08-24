@@ -38,6 +38,7 @@ module.exports = {
             target: 'http://www.aaa.com', //你的测试域名,当访问代理的api1开头的url要代理的开发服务
             cors:true, // 如果要配置cors跨域可以在这里设置
             changeOrigin: true, // 如果后端对域名有识别，可以配置这个
+            tag:'xxxx功能'， // 配置标签
         },
         /**
          * http://proxyhost/api2/1 
@@ -45,13 +46,16 @@ module.exports = {
          * http://www.aaa.com/api3/api2/1 
          */
         '/api2': {
-            target: 'https://www.bbb.com/api3' //当访问代理的api2开头的url要代理的开发服务
+            target: 'https://www.bbb.com/api3', //当访问代理的api2开头的url要代理的开发服务
+            tag:'xxxx服务'， // 配置标签
         },
-        '/ws1': {
-            target: 'ws://www.ccc.com'//当访问/ws/api开头的url要代理的开发服务
+        '/ws/api': {
+            target: 'ws://www.ccc.com', //当访问/ws/api开头的url要代理的开发服务
+            tag:'xxxxWebSockt服务'， // 配置标签
         },
         '/ws2': {
-            target: 'ws://www.ddd.com'//当访问/ws开头的url要代理的开发服务
+            target: 'ws://www.ddd.com', //当访问/ws2开头的url要代理的开发服务
+            tag:'xxxxWebSockt2号服务'， // 配置标签
         }
     },
     httpPort:8000, // http代理服务的端口

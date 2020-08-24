@@ -22,6 +22,11 @@ export default class MyHome extends HTMLContent {
                 let myRowTemplateContent = myRowTemplate.content.cloneNode(true);
                 myRowTemplateContent.querySelector(".before-text").innerHTML = `转发(URL:${proxyKey})到:`
                 myRowTemplateContent.querySelector(".url-input").value = resp.proxyTable[proxyKey].target;
+                if(resp.proxyTable[proxyKey].tag) {
+                    myRowTemplateContent.querySelector(".go-monitor-btn").innerHTML = `前往监控(${resp.proxyTable[proxyKey].tag})`
+                } else {
+                    myRowTemplateContent.querySelector(".go-monitor-btn").innerHTML = `前往监控`
+                }
                 myRowTemplateContent.querySelector(".go-monitor-btn").addEventListener('click',()=>{
                     window.location.hash=`#my-monitor?key=${proxyKey}`;
                 })
