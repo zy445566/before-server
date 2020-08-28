@@ -98,7 +98,7 @@ module.exports = {
     httpPort:8000, // http代理服务的端口
     httpsPort:8443, // https代理服务的端口
     monitorPort:8555, // 监控服务端口服务的端口
-    HistoryNumber:300, // 总历史记录上限，存在服务内存中，重启服务内存失效
+    HistoryNumber:300, // 总历史记录上限，存在服务内存中，重启服务内存重置
 }
 ```
 
