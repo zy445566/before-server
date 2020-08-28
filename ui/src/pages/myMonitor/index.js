@@ -17,13 +17,7 @@ export default class myMonitor extends HTMLContent {
     async init() {
         const query = getQuery(this);
         this.key = query.key;
-        try{
-            const reqData = JSON.parse(localStorage.getItem(this.getDataKey(this.key)));
-            this.reqList = reqData?reqData:[];
-            this.reRenderShow()
-        } catch(err) {
-            this.reqList = []
-        }
+        this.reqList = []
         this.startSocket({key:query.key})
     }
 
@@ -33,12 +27,18 @@ export default class myMonitor extends HTMLContent {
 
     async addListen() {
         this.shadow.querySelector(".go-back-btn").addEventListener('click',(e)=>this.goHome(e))
+        this.shadow.querySelector(".history-btn").addEventListener('click',(e)=>this.getHistory(e))
         this.shadow.querySelector(".clear-btn").addEventListener('click',(e)=>this.clearReq(e))
         this.shadow.querySelector(".fifter-text-input").addEventListener('keyup',(e)=>this.changeFifter(e))
     }
 
     goHome() {
         window.location.hash='';
+    }
+
+    getHistory() {
+        this.reqList = [];
+        this.ws.send(JSON.stringify({type:'history'}));
     }
 
     clearReq() {
@@ -173,7 +173,7 @@ export default class myMonitor extends HTMLContent {
     startSocket(config) {
         this.ws = new WebSocket(`ws://${window.location.host}/`);
         this.ws.onopen = () => {
-            this.ws.send(JSON.stringify(config));
+            this.ws.send(JSON.stringify({type:'config', config}));
         };      
         this.ws.onmessage = (evt) => {
             this.reqList.push(JSON.parse(evt.data));
@@ -195,11 +195,5 @@ export default class myMonitor extends HTMLContent {
             this.ws.closeBySelf = true;
             this.ws.close();
         }
-        if(this.reqList.length>15) {
-            localStorage.setItem(this.getDataKey(this.key),JSON.stringify(this.reqList.slice(this.reqList.length-15)))
-        } else {
-            localStorage.setItem(this.getDataKey(this.key),JSON.stringify(this.reqList))
-        }
-        
     }
 }

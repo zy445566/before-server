@@ -1,6 +1,6 @@
 {
   "name": "before-server",
-  "version": "1.0.38",
+  "version": "1.0.39",
   "description": "before server for query client request",
   "main": "index.js",
   "scripts": {
@@ -36,7 +36,7 @@
     "koa-router": "^8.0.8",
     "koa-static": "^5.0.0",
     "stream-array": "^1.1.2",
-    "web-components-content": "^1.0.8"
+    "web-components-content": "^1.0.9"
   },
   "devDependencies": {
     "@rollup/plugin-alias": "^3.1.1",

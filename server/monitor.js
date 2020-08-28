@@ -24,7 +24,14 @@ module.exports = function start () {
     const app = new Koa();
     app.use(koaStatic(path.join(__dirname, 'static'),{index:'index.html'}));
     app.use(router.routes())
-    const server = app.listen(bsConfig.monitorPort,listenCallBack('monitor','http',`127.0.0.1:${bsConfig.monitorPort}`))
+    const server = app.listen(bsConfig.monitorPort,listenCallBack('monitor','http',`127.0.0.1:${bsConfig.monitorPort}`));
+    const historyEventDataList = [];
+    app.on('proxy-request-info', function(eventData){
+        if(historyEventDataList.length>bsConfig.HistoryNumber) {
+            historyEventDataList.shift()
+        }
+        historyEventDataList.push(eventData)
+    })
     server.on('upgrade', (req, socket, head) => {
         const secWebSocketAccept = getSecWebSocketAccept(req.headers['sec-websocket-key'])
         socket.write(
@@ -38,7 +45,14 @@ module.exports = function start () {
         socket.on('data', (data) => {
             const frame = decodeSocketFrame(data);
             if(frame.opcode===1) {
-                fifterConfig = JSON.parse(frame.payloadBuf.toString());
+                const data = JSON.parse(frame.payloadBuf.toString());
+                if(data.type === 'config') {
+                    fifterConfig = data.config;
+                } else if (data.type === 'history') {
+                    for(const historyEventData of historyEventDataList) {
+                        sendProxyRequestInfoFunc(historyEventData)
+                    }
+                }
             }
             if(frame.opcode===8) {
                 socket.end()
