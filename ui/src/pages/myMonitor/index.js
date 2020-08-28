@@ -1,10 +1,9 @@
 import indexHtml from './index.html'
-import {getQuery} from '@/components/MyRouter/index.js'
+import {HTMLContent, MyRouter} from 'web-components-content'
+const {getQuery} = MyRouter;
 import apiMarkDownTemplate from './api-template.md'
-import HTMLContent from '@/components/HTMLContent/index.js'
-export default class MyHome extends HTMLContent {
-    constructor() {
-        super();
+export default class myMonitor extends HTMLContent {
+    connectedCallback() {
         this.ws = null;
         this.key = '';
         this.reqList = []

@@ -3,6 +3,7 @@ const path = require('path')
 const html = require('rollup-plugin-html')
 const md = require('rollup-plugin-md')
 const alias  = require('@rollup/plugin-alias')
+const {nodeResolve}  = require('@rollup/plugin-node-resolve')
 export default {
     input: 'ui/src/app.js',
     plugins: [
@@ -15,6 +16,7 @@ export default {
             include: '**/*.html'
         }),
         md(),
+        nodeResolve()
     ],
     output: {
       file: path.join(getStaticPath(),'bundle.js'),

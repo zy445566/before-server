@@ -1,9 +1,8 @@
 import indexHtml from './index.html'
 import myRequest from '@/components/MyRequest/index.js'
-import HTMLContent from '@/components/HTMLContent/index.js'
+import {HTMLContent} from 'web-components-content'
 export default class MyHome extends HTMLContent {
-    constructor() {
-        super();
+    connectedCallback() {
         this.render(indexHtml);
         this.addStyleSheets(document.styleSheets);
         this.init();

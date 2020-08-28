@@ -1,7 +1,5 @@
 import appHtml from '@/app.html'
-import HTMLContent from '@/components/HTMLContent/index.js'
-import MyHashRoute from '@/components/MyHashRoute/index.js'
-import MyRouter from '@/components/MyRouter/index.js'
+import {HTMLContent, MyHashRoute, MyRouter} from 'web-components-content'
 import MyHome from '@/pages/MyHome/index.js'
 import myMonitor from '@/pages/myMonitor/index.js'
 class AppContainer extends HTMLContent {
