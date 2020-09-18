@@ -10,5 +10,5 @@ module.exports = {
     httpPort:8000,
     httpsPort:8443,
     monitorPort:8555,
-    HistoryNumber:300,
+    HistoryNumber:100,
 }

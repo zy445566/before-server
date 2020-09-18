@@ -81,6 +81,8 @@ module.exports = function start (callback = (data)=>{}) {
     const maxCorsTime = 30*24*60*60;
     proxy.on('error', async function (e, req, res) {
         const msg = '请求超时，请检查目标地址是否可用';
+        // 防止从undefined取值
+        if(!req) {req={}}
         callback({
             req:{
                 httpVersion:req.httpVersion,

@@ -25,12 +25,20 @@ module.exports = function start () {
     app.use(koaStatic(path.join(__dirname, 'static'),{index:'index.html'}));
     app.use(router.routes())
     const server = app.listen(bsConfig.monitorPort,listenCallBack('monitor','http',`127.0.0.1:${bsConfig.monitorPort}`));
-    const historyEventDataList = [];
+    const historyEventDataMap = {};
+    historyEventDataMap[""] = [];
+    for(const proxyTableKey of proxyTableKeys) {
+        historyEventDataMap[proxyTableKey] = [];
+    }
     app.on('proxy-request-info', function(eventData){
-        if(historyEventDataList.length>bsConfig.HistoryNumber) {
-            historyEventDataList.shift()
+        const proxyTableIndex = matchProxyTableKeysUrlIndex(eventData.req.url,proxyTableKeys);
+        if(proxyTableIndex>=0) {
+            const proxyTableKey = proxyTableKeys[proxyTableIndex];
+            if(historyEventDataMap[proxyTableKey].length>bsConfig.HistoryNumber) {
+                historyEventDataMap[proxyTableKey].shift()
+            }
+            historyEventDataMap[proxyTableKey].push(eventData)
         }
-        historyEventDataList.push(eventData)
     })
     server.on('upgrade', (req, socket, head) => {
         const secWebSocketAccept = getSecWebSocketAccept(req.headers['sec-websocket-key'])
@@ -49,7 +57,8 @@ module.exports = function start () {
                 if(data.type === 'config') {
                     fifterConfig = data.config;
                 } else if (data.type === 'history') {
-                    for(const historyEventData of historyEventDataList) {
+                    if(!historyEventDataMap[fifterConfig.key]) {return;}
+                    for(const historyEventData of historyEventDataMap[fifterConfig.key]) {
                         sendProxyRequestInfoFunc(historyEventData)
                     }
                 }
