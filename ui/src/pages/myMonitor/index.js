@@ -174,14 +174,18 @@ export default class myMonitor extends HTMLContent {
         this.ws = new WebSocket(`ws://${window.location.host}/`);
         this.ws.onopen = () => {
             this.ws.send(JSON.stringify({type:'config', config}));
-        };      
+        };
+        this.ws.pingIntervalHandle = setInterval(()=>{
+            this.ws.send(JSON.stringify({type:'ping'}));
+        },5000)
         this.ws.onmessage = (evt) => {
             this.reqList.push(JSON.parse(evt.data));
             this.reRenderShow()
         };
         this.ws.onclose = () => {
             if(!this.ws.closeBySelf) {
-                if(confirm('连接已断开是否重连?\r\n可能是太久没有使用到资源，出于节流考虑自动关闭了。')){
+                if(confirm('连接已断开是否重连?\r\n可能是太久没有使用到资源，也可能是网络不佳导致关闭了。')){
+                    clearInterval(this.ws.pingIntervalHandle);
                     this.startSocket(config);
                 } else {
                     this.goHome()
@@ -193,6 +197,7 @@ export default class myMonitor extends HTMLContent {
     disconnectedCallback() {
         if(this.ws) {
             this.ws.closeBySelf = true;
+            clearInterval(this.ws.pingIntervalHandle);
             this.ws.close();
         }
     }
