@@ -1,6 +1,6 @@
 {
   "name": "before-server",
-  "version": "1.0.43",
+  "version": "1.0.45",
   "description": "before server for query client request",
   "main": "index.js",
   "scripts": {

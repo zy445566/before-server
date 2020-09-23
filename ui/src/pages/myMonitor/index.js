@@ -133,7 +133,7 @@ export default class myMonitor extends HTMLContent {
     }
 
     addBodyToPre(strBody, preEle) {
-        preEle.innerHTML = this.getBodyDataStr(strBody);
+        preEle.textContent = this.getBodyDataStr(strBody);
     }
 
     getBodyDataStr(strBody) {
