@@ -19,6 +19,12 @@ router.get('/get_config_tip',async (ctx)=>{
     }
 })
 
+function pushEventDataToList(historyEventDataList, eventData) {
+    if(historyEventDataList.length>bsConfig.HistoryNumber) {
+        historyEventDataList.shift()
+    }
+    historyEventDataList.push(eventData)
+}
 module.exports = function start () {
     const proxyTableKeys = Object.keys(bsConfig.proxyTable)
     const app = new Koa();
@@ -32,14 +38,12 @@ module.exports = function start () {
     }
     app.on('proxy-request-info', function(eventData){
         const proxyTableIndex = matchProxyTableKeysUrlIndex(eventData.req.url,proxyTableKeys);
-        let proxyTableKey = "";
         if(proxyTableIndex>=0) {
-            proxyTableKey = proxyTableKeys[proxyTableIndex];
+            const proxyTableKey = proxyTableKeys[proxyTableIndex];
+            pushEventDataToList(historyEventDataMap[proxyTableKey], eventData);
         }
-        if(historyEventDataMap[proxyTableKey].length>bsConfig.HistoryNumber) {
-            historyEventDataMap[proxyTableKey].shift()
-        }
-        historyEventDataMap[proxyTableKey].push(eventData)
+        // 监控全部要额外推送
+        pushEventDataToList(historyEventDataMap[""], eventData);
     })
     server.on('upgrade', (req, socket, head) => {
         const secWebSocketAccept = getSecWebSocketAccept(req.headers['sec-websocket-key'])
