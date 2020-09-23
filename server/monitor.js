@@ -32,13 +32,14 @@ module.exports = function start () {
     }
     app.on('proxy-request-info', function(eventData){
         const proxyTableIndex = matchProxyTableKeysUrlIndex(eventData.req.url,proxyTableKeys);
+        let proxyTableKey = "";
         if(proxyTableIndex>=0) {
-            const proxyTableKey = proxyTableKeys[proxyTableIndex];
-            if(historyEventDataMap[proxyTableKey].length>bsConfig.HistoryNumber) {
-                historyEventDataMap[proxyTableKey].shift()
-            }
-            historyEventDataMap[proxyTableKey].push(eventData)
+            proxyTableKey = proxyTableKeys[proxyTableIndex];
         }
+        if(historyEventDataMap[proxyTableKey].length>bsConfig.HistoryNumber) {
+            historyEventDataMap[proxyTableKey].shift()
+        }
+        historyEventDataMap[proxyTableKey].push(eventData)
     })
     server.on('upgrade', (req, socket, head) => {
         const secWebSocketAccept = getSecWebSocketAccept(req.headers['sec-websocket-key'])
