@@ -60,7 +60,7 @@ module.exports = {
     },
     httpPort:8000, // http代理服务的端口
     httpsPort:8443, // https代理服务的端口
-    monitorPort:8555,// 监控服务端口服务的端口
+    monitorPort:8555,// 监控服务页面服务端口，可以通过这个端口打开UI界面
 }
 ```
 ## 0x2安装全局包
