@@ -68,11 +68,14 @@ module.exports = {
 # 这里也可以使用yarn
 npm install before-server -g
 ```
-## 0x3在工作目录启动服务即可
+## 0x3在工作目录启动服务
 ```sh
 # dir: /your-work-dir
 before-server # or `npx before-server` 
 ```
+最后前端(包括移动端和web端以及小程序端)修改请求服务地址到前置服务，默认http为8000端口,默认https为8443。
+
+完成以上工作后，就可以使用浏览器打开8555端口的UI界面，来查看发送的请求。
 
 # 功能截图
 
