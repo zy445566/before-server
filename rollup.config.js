@@ -1,9 +1,9 @@
 const {getStaticPath} = require('./util/index')
 const path = require('path')
-const html = require('rollup-plugin-html')
-const md = require('rollup-plugin-md')
 const alias  = require('@rollup/plugin-alias')
 const {nodeResolve}  = require('@rollup/plugin-node-resolve')
+const commonjs  = require('@rollup/plugin-commonjs')
+const { createFilter }= require('@rollup/pluginutils');
 export default {
     input: 'ui/src/app.js',
     plugins: [
@@ -12,10 +12,20 @@ export default {
                 { find: '@', replacement: path.join(__dirname, 'ui/src') },
             ]
         }),
-        html({
-            include: '**/*.html'
-        }),
-        md(),
+        (function text() {
+            return {
+                name: 'text',
+                transform ( data, id ) {
+                    const filter = createFilter( [ '**/*.md','**/*.txt','**/*.html'], undefined );
+                    if ( !filter( id ) ) return null;
+                    return {
+                        code: `export default ${JSON.stringify(data.toString())};`,
+                        map: { mappings: '' }
+                    };
+                }
+            }
+        })(),
+        commonjs(),
         nodeResolve()
     ],
     output: {

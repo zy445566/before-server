@@ -2,6 +2,7 @@ import indexHtml from './index.html'
 import {HTMLContent, MyRouter} from 'web-components-content'
 const {getQuery} = MyRouter;
 import apiMarkDownTemplate from './api-template.md'
+import * as prismjs from 'prismjs'
 export default class myMonitor extends HTMLContent {
     connectedCallback() {
         this.ws = null;
@@ -105,18 +106,17 @@ export default class myMonitor extends HTMLContent {
         const reqUl = reqBodyTemplateContent.querySelector(".req-header-data")
         this.addHeadersToUl(data.req.headers,reqUl);
         // 添加请求数据
-        const reqPre = reqBodyTemplateContent.querySelector(".req-body-data")
-        this.addBodyToPre(data.req.body,reqPre)
+        const reqDiv= reqBodyTemplateContent.querySelector(".req-body-data")
+        reqDiv.innerHTML= this.getJsonPrettyCode(this.getJsonBodyData(data.req.body));
         // 添加返回头
         const resUl = reqBodyTemplateContent.querySelector(".res-header-data")
         this.addHeadersToUl(data.res.headers,resUl);
         // 添加返回数据
-        const resPre = reqBodyTemplateContent.querySelector(".res-body-data")
+        const resDiv = reqBodyTemplateContent.querySelector(".res-body-data")
         if(data.res.bodyUrl) {
-            const resDiv = reqBodyTemplateContent.querySelector(".res-body-data-div")
             resDiv.innerHTML=`<a class="btn btn-primary" href="/${data.res.bodyUrl}" role="button">下载数据内容</a>`
         } else {
-            this.addBodyToPre(data.res.body,resPre)
+            resDiv.innerHTML= this.getJsonPrettyCode(this.getJsonBodyData(data.res.body));
         }
         // 向右侧body推数据
         const reqBody = this.shadow.querySelector(".req-body");
@@ -132,16 +132,28 @@ export default class myMonitor extends HTMLContent {
         }
     }
 
-    addBodyToPre(strBody, preEle) {
-        preEle.textContent = this.getBodyDataStr(strBody);
+    getJsonPrettyCode(jsonBodyData) {
+        if(jsonBodyData.isJson) {
+            return prismjs.highlight(jsonBodyData.body,prismjs.languages.javascript,'javascript');
+        }
+        return jsonBodyData.body;
     }
 
-    getBodyDataStr(strBody) {
-        if(!strBody) {return  '无数据'}
+    getJsonBodyData(strBody) {
+        const data = {
+            isJson:false,
+            body:strBody
+        }
+        if(!strBody) {
+            data.body = '无数据'
+            return  data;
+        }
         try{
-            return JSON.stringify(JSON.parse(strBody),null,2)
+            data.body = JSON.stringify(JSON.parse(strBody),null,2);
+            data.isJson = true;
+            return data;
         } catch(err) {
-            return strBody
+            return data;
         }
     }
 
@@ -153,15 +165,18 @@ export default class myMonitor extends HTMLContent {
         renderData.method = data.req.method;
         if(renderData.method.toLowerCase()==='get') {
             renderData.url = completeUrl.pathname;
-            renderData.paramsData = completeUrl.search
+            renderData.paramsData = this.getJsonBodyData(completeUrl.search);
         } else {
-            renderData.url = data.req.url
-            renderData.paramsData = this.getBodyDataStr(data.req.body)
+            renderData.url = data.req.url;
+            renderData.paramsData = this.getJsonBodyData(data.req.body);
         }
-        renderData.resData = this.getBodyDataStr(data.res.body);
+        renderData.paramsData.lang = renderData.paramsData.isJson?'json':'';
+        renderData.resData = this.getJsonBodyData(data.res.body);
+        renderData.resData.lang = renderData.resData.isJson?'json':'';
         const downloadA = document.createElement('a')
         downloadA.download = `${renderData.title}.md`
         downloadA.style.display = 'none';
+        console.log(renderData, 'return `'+apiMarkDownTemplate.replace(/`/g,'\\`')+'`;')
         const compileApiMarkDownTemplate= new Function('renderData', 'return `'+apiMarkDownTemplate.replace(/`/g,'\\`')+'`;');
         const blob = new Blob([compileApiMarkDownTemplate(renderData)])
         downloadA.href = URL.createObjectURL(blob)

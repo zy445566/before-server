@@ -13,14 +13,14 @@
 
 **请求示例**
 
-``` 
-${renderData.paramsData} 
+```${renderData.paramsData.lang}
+${renderData.paramsData.body} 
 ```
 
 **返回示例**
 
-``` 
-${renderData.resData} 
+```${renderData.resData.lang}
+${renderData.resData.body} 
 ```
 
 **备注** 

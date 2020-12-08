@@ -20,7 +20,7 @@
   <div>
     <h4>请求数据</h4>
     <hr/>
-    <pre class="req-body-data"></pre>
+    <div class="req-body-data"></div>
   </div>
   <div>
     <h4>返回头</h4>
@@ -30,11 +30,11 @@
   <div>
     <h4>返回数据</h4>
     <hr/>
-    <pre class="res-body-data"></pre>
-    <div class="res-body-data-div"></div>
+    <div class="res-body-data"></div>
   </div>
 </template>
 <div class="container">
+  <link rel="stylesheet" href="/prism.css">
   <div class="row my-head-row">
     <button type="button" class="btn btn-info go-back-btn">返回</button>
     &nbsp;
@@ -92,5 +92,11 @@
 .fifter-text {
   display: inline-block;
   width: 300px;
+}
+.req-body-data {
+  white-space: pre;
+}
+.res-body-data {
+  white-space: pre;
 }
 </style>
