@@ -56,6 +56,15 @@ module.exports = {
         '/ws2': {
             target: 'ws://www.ddd.com', //当访问/ws2开头的url要代理的开发服务
             tag:'xxxxWebSockt2号服务'， // 配置标签
+        },
+        /**
+         * 最好配置一下根服务，这样的话如果都不能匹配到，还可以直接匹配到根服务
+         * before-server匹配的优先级是从上到下，所以根建议配置到最下面
+         * 这样监控全部就能发挥最大功力了
+         */
+        '/': {
+            target: 'http://www.aaa.com', 
+            tag:'根服务'， // 配置标签
         }
     },
     httpPort:8000, // http代理服务的端口
