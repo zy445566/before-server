@@ -71,11 +71,15 @@ npm install before-server -g
 ## 0x3在工作目录启动服务
 ```sh
 # dir: /your-work-dir
-before-server # or `npx before-server` 
+before-server # 或者 `npx before-server`
+# 也可以使用pm2启动，如 pm2 start before-server # 但注意pm2需要在配置文件目录启动
 ```
+
 最后前端(包括移动端和web端以及小程序端)修改请求服务地址到前置服务，默认http为8000端口,默认https为8443。
 
 完成以上工作后，就可以使用浏览器打开8555端口的UI界面，来查看发送的请求。
+
+注意如果使用nginx反向代理需要配置支持8555端口使用WebStocket功能。
 
 # 功能截图
 
