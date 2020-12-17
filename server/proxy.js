@@ -93,6 +93,7 @@ module.exports = function start (callback = (data)=>{}) {
         const msg = '请求超时，请检查目标地址是否可用';
         // 防止从undefined取值
         if(!req) {req={}}
+        if(!req.rawBody) {req.rawBody={}}
         callback({
             req:{
                 httpVersion:req.httpVersion,

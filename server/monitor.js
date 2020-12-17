@@ -72,28 +72,34 @@ module.exports = function start () {
                 socket.end()
             }
         });
+        let is_open_socket = true;
         let sendProxyRequestInfoFunc = function(eventData) {
             if(fifterConfig.key) {
                 const proxyTableIndex = matchProxyTableKeysUrlIndex(eventData.req.url,proxyTableKeys);
                 if(proxyTableIndex>=0) {
                     if(fifterConfig.key===proxyTableKeys[proxyTableIndex]) {
-                        socket.write(encodeSocketFrame({
-                            fin:1,
-                            opcode:1,
-                            payloadBuf:Buffer.from(JSON.stringify(eventData))
-                        }))
+                        if(is_open_socket) {
+                            socket.write(encodeSocketFrame({
+                                fin:1,
+                                opcode:1,
+                                payloadBuf:Buffer.from(JSON.stringify(eventData))
+                            }))
+                        }
                     }
                 }
             } else {
-                socket.write(encodeSocketFrame({
-                    fin:1,
-                    opcode:1,
-                    payloadBuf:Buffer.from(JSON.stringify(eventData))
-                }))
+                if(is_open_socket) {
+                    socket.write(encodeSocketFrame({
+                        fin:1,
+                        opcode:1,
+                        payloadBuf:Buffer.from(JSON.stringify(eventData))
+                    }))
+                }
             }
             
         }
         socket.on('end', () => {
+            is_open_socket = false;
             app.removeListener('proxy-request-info', sendProxyRequestInfoFunc);
         });
 
