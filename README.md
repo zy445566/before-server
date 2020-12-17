@@ -57,6 +57,13 @@ module.exports = {
             target: 'ws://www.ddd.com', //当访问/ws2开头的url要代理的开发服务
             tag:'xxxxWebSockt2号服务'， // 配置标签
         },
+        '/log': {
+            target: 'ws://www.eee.com', //重写服务地址示例
+            tag:'重写服务'， // 配置标签
+            pathRewrite: {
+                "^/log": "", // 此时当访问/log/xxx时，会修改请求到/xxx
+            },
+        },
         /**
          * 最好配置一下根服务，这样的话如果都不能匹配到，还可以直接匹配到根服务
          * before-server匹配的优先级是从上到下，所以根建议配置到最下面
