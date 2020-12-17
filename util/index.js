@@ -79,5 +79,40 @@ module.exports.getConfigTipString = function() {
     return `请配置工作目录的.bsrc.js文件(${process.cwd()}${path.sep}.bsrc.js)配置项proxyTable后重启服务，例子如下\n\n`+configTpStr;
 }
 
+
+module.exports.createPathRewriter =  function createPathRewriter(rewriteConfig) {
+    let rulesCache;
+  
+    if (typeof rewriteConfig === 'function') {
+      const customRewriteFn = rewriteConfig;
+      return customRewriteFn;
+    } else {
+      rulesCache = parsePathRewriteRules(rewriteConfig);
+      return rewritePath;
+    }
+  
+    function rewritePath(path) {
+      let result = path;
+      for(const rule of rulesCache) {
+        if (rule.regex.test(path)) {
+            result = result.replace(rule.regex, rule.value);
+            break;
+          }
+      }
+      return result;
+    }
+}
+
+function parsePathRewriteRules(rewriteConfig) {
+    const rules = [];
+    for(const key in rewriteConfig) {
+        rules.push({
+            regex: new RegExp(key),
+            value: rewriteConfig[key],
+        });
+    }
+    return rules;
+  }
+
 module.exports.getStaticPath = getStaticPath;
 

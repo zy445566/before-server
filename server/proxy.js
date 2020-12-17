@@ -2,7 +2,7 @@ const bsConfig = require('../.bsrc.js');
 const {
     getConfig, listenCallBack, getConfigTipString, 
     matchProxyTableKeysUrlIndex,writeDataToFile,
-    clearFileData
+    clearFileData, createPathRewriter
 } = require('../util/index')
 Object.assign(bsConfig, getConfig());
 const https = require('https');
@@ -52,6 +52,16 @@ async function dealWebRequest(req,res) {
     req.rawBody = await getStreamData(req);
     req.body = Buffer.concat(req.rawBody).toString();
     const proxyConfig = bsConfig.proxyTable[proxyTableKeys[proxyTableIndex]];
+    let rewritePathFunc = null;
+    if(proxyConfig.pathRewrite) {
+        rewritePathFunc = createPathRewriter(proxyConfig.pathRewrite);
+    }
+    if(rewritePathFunc) {
+        const path = await rewritePathFunc(req.url, req);
+        if (typeof path === 'string') {
+            req.url = path;
+        }
+    }
     const targetUrl = proxyConfig.target;
     const targetUrlObj = url.parse(targetUrl);
     req.protocol = targetUrlObj.protocol;
