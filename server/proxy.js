@@ -41,16 +41,20 @@ function getStreamData(stream) {
 
 async function dealWebRequest(req,res) {
     const proxyTableKeys = Object.keys(bsConfig.proxyTable)
-    const proxyTableIndex = matchProxyTableKeysUrlIndex(req.url,proxyTableKeys)
+    req.bsData = {
+        url:req.url,
+        rewrite_url:req.url,
+    }
+    const proxyTableIndex = matchProxyTableKeysUrlIndex(req.bsData.url,proxyTableKeys)
     if(proxyTableKeys.length<=0){
         res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
         return res.end(getConfigTipString())
     }
     if(proxyTableIndex<0) {
-        return res.end(`当前URL:${req.url}匹配索引${proxyTableIndex}失败，请在工作目录的.bsrc.js文件配置当前路径的转发`)
+        return res.end(`当前URL:${req.bsData.url}匹配索引${proxyTableIndex}失败，请在工作目录的.bsrc.js文件配置当前路径的转发`)
     }
-    req.rawBody = await getStreamData(req);
-    req.body = Buffer.concat(req.rawBody).toString();
+    req.bsData.rawBody = await getStreamData(req);
+    req.bsData.body = Buffer.concat(req.bsData.rawBody).toString();
     const proxyConfig = bsConfig.proxyTable[proxyTableKeys[proxyTableIndex]];
     let rewritePathFunc = null;
     if(proxyConfig.pathRewrite) {
@@ -60,17 +64,18 @@ async function dealWebRequest(req,res) {
         const path = await rewritePathFunc(req.url, req);
         if (typeof path === 'string') {
             req.url = path;
+            req.bsData.rewrite_url = req.url;
         }
     }
     const targetUrl = proxyConfig.target;
     const targetUrlObj = url.parse(targetUrl);
-    req.protocol = targetUrlObj.protocol;
-    req.host = targetUrlObj.host;
-    req.target = targetUrl;
-    req.start_time = new Date().getTime();
-    res.cors = proxyConfig.cors;
+    req.bsData.protocol = targetUrlObj.protocol;
+    req.bsData.host = targetUrlObj.host;
+    req.bsData.target = targetUrl;
+    req.bsData.start_time = new Date().getTime();
+    req.bsData.cors = proxyConfig.cors;
     return proxy.web(req, res, {
-        buffer:streamify(req.rawBody),
+        buffer:streamify(req.bsData.rawBody),
         ...proxyConfig,
     });
     
@@ -89,40 +94,51 @@ module.exports = function start (callback = (data)=>{}) {
     httpsServer.on('upgrade',dealSocketRequest);
     const maxBytes = 10*1024*1024;
     const maxCorsTime = 30*24*60*60;
-    proxy.on('error', async function (e, req, res) {
-        const msg = '请求超时，请检查目标地址是否可用';
-        // 防止从undefined取值
-        if(!req) {req={}}
-        if(!req.rawBody) {req.rawBody={}}
+    async function runCallback(req, res) {
         callback({
             req:{
                 httpVersion:req.httpVersion,
                 headers:req.headers,
-                url:req.url,
+                url:req.bsData.url,
+                rewrite_url:req.bsData.rewrite_url,
                 method:req.method,
-                headers:req.headers,
-                bodyUrl:req.rawBody.length<maxBytes?null:await writeDataToFile(req.rawBody,'req'),
-                body:req.rawBody.length<maxBytes?req.body:'数据过大无法显示',
-                protocol:req.protocol,
-                host:req.host,
-                target:req.target,
-                time:0
+                bodyUrl:req.bsData.rawBody.length<maxBytes?null:await writeDataToFile(req.bsData.rawBody,'req'),
+                body:req.bsData.rawBody.length<maxBytes?req.bsData.body:'数据过大无法显示',
+                protocol:req.bsData.protocol,
+                host:req.bsData.host,
+                target:req.bsData.target,
+                time:req.bsData.end_time-req.bsData.start_time
             },
             res:{
-                headers:{},
-                trailers:{},
-                statusCode:500,
-                statusMessage:'OutTime',
-                body:msg,
+                headers:res.headers,
+                trailers:res.trailers,
+                statusCode:res.statusCode,
+                statusMessage:res.statusMessage,
+                bodyUrl:res.bsData.rawBody.length<maxBytes?null:await writeDataToFile(res.bsData.rawBody,'res'),
+                body:res.bsData.rawBody.length<maxBytes?res.bsData.body:'数据过大无法显示',
             }
         })
+    }
+    proxy.on('error', async function (e, req, res) {
+        const msg = '请求超时，请检查目标地址是否可用';
+        // 防止从undefined取值
+        if(!req) {req={}}
+        if(!req.bsData) {req.bsData={}}
+        if(!req.bsData.rawBody) {req.bsData.rawBody={}}
+        if(!res) {res={}}
+        if(!res.bsData) {res.bsData={}}
+        if(!res.bsData.rawBody) {res.bsData.rawBody={}}
+        res.statusCode = 500
+        res.statusMessage = 'OutTime'
+        res.body = msg
+        await runCallback(req, res);
         res.writeHead(500, {
             'Content-Type': 'text/plain'
         });
         res.end(msg);
     })
     proxy.on('proxyRes', async function (proxyRes, req, res) {
-        if(res.cors) {
+        if(req.bsData.cors) {
             res.setHeader('Access-Control-Allow-Origin','*');
             res.setHeader('Access-Control-Expose-Headers',Object.keys(proxyRes.headers).join(','));
             res.setHeader('Access-Control-Max-Age',maxCorsTime);
@@ -133,32 +149,11 @@ module.exports = function start (callback = (data)=>{}) {
             ].join(','));
             res.setHeader('Access-Control-Allow-Headers',Object.keys(proxyRes.headers).join(','));
         }
-        proxyRes.rawBody = await getStreamData(proxyRes);
-        proxyRes.body = Buffer.concat(proxyRes.rawBody).toString();
-        req.end_time = new Date().getTime()
-        callback({
-            req:{
-                httpVersion:req.httpVersion,
-                headers:req.headers,
-                url:req.url,
-                method:req.method,
-                headers:req.headers,
-                bodyUrl:req.rawBody.length<maxBytes?null:await writeDataToFile(req.rawBody,'req'),
-                body:req.rawBody.length<maxBytes?req.body:'数据过大无法显示',
-                protocol:req.protocol,
-                host:req.host,
-                target:req.target,
-                time:req.end_time-req.start_time
-            },
-            res:{
-                headers:proxyRes.headers,
-                trailers:proxyRes.trailers,
-                statusCode:proxyRes.statusCode,
-                statusMessage:proxyRes.statusMessage,
-                bodyUrl:proxyRes.rawBody.length<maxBytes?null:await writeDataToFile(proxyRes.rawBody,'res'),
-                body:proxyRes.rawBody.length<maxBytes?proxyRes.body:'数据过大无法显示',
-            }
-        })
+        proxyRes.bsData = {};
+        proxyRes.bsData.rawBody = await getStreamData(proxyRes);
+        proxyRes.bsData.body = Buffer.concat(proxyRes.bsData.rawBody).toString();
+        req.bsData.end_time = new Date().getTime()
+        await runCallback(req, proxyRes);
     });
     const clearFileTime = 24*3600*1000;
     clearFileData(clearFileTime)

@@ -91,6 +91,9 @@ export default class myMonitor extends HTMLContent {
         const requestUrlLi = document.createElement('li');
         requestUrlLi.innerHTML = `请求地址 : ${data.req.target}${data.req.url}`;
         generalUl.appendChild(requestUrlLi)
+        const requestRewriteUrlLi = document.createElement('li');
+        requestRewriteUrlLi.innerHTML = `重写后地址 : ${data.req.target}${data.req.rewrite_url}`;
+        generalUl.appendChild(requestRewriteUrlLi)
         const requestMethodLi = document.createElement('li');
         requestMethodLi.innerHTML = `请求方式 : ${data.req.method}`;
         generalUl.appendChild(requestMethodLi)
