@@ -51,6 +51,7 @@ async function dealWebRequest(req,res) {
         return res.end(getConfigTipString())
     }
     if(proxyTableIndex<0) {
+        res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
         return res.end(`当前URL:${req.bsData.url}匹配索引${proxyTableIndex}失败，请在工作目录的.bsrc.js文件配置当前路径的转发`)
     }
     req.bsData.rawBody = await getStreamData(req);
@@ -133,7 +134,7 @@ module.exports = function start (callback = (data)=>{}) {
         res.body = msg
         await runCallback(req, res);
         res.writeHead(500, {
-            'Content-Type': 'text/plain'
+            'Content-Type': 'text/plain; charset=utf-8'
         });
         res.end(msg);
     })

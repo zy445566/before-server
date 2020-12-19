@@ -116,3 +116,11 @@ function parsePathRewriteRules(rewriteConfig) {
 
 module.exports.getStaticPath = getStaticPath;
 
+module.exports.rsaPrivateKeyEncode = function (privateKey, buffer) {
+    return crypto.privateEncrypt(privateKey, buffer);
+}
+
+module.exports.rsaPublicKeyDecode = function (publicKey, buffer) {
+    return crypto.publicDecrypt(publicKey, buffer);
+}
+
