@@ -109,6 +109,11 @@ export default class myMonitor extends HTMLContent {
         const reqUl = reqBodyTemplateContent.querySelector(".req-header-data")
         this.addHeadersToUl(data.req.headers,reqUl);
         // 添加请求数据
+        const reqDownLoadBtn = reqBodyTemplateContent.querySelector(".req-body-data-download");
+        if(data.req.bodyBuffer.data && data.req.bodyBuffer.data.length>0) {
+            reqDownLoadBtn.href = this.bufferToBlobUrl(data.req.bodyBuffer.data);
+            reqDownLoadBtn.style.display = 'inline';
+        }
         const reqDiv= reqBodyTemplateContent.querySelector(".req-body-data");
         const reqJsonPrettyCode = this.getJsonPrettyCode(this.getJsonBodyData(data.req.body));
         if(reqJsonPrettyCode.isJson) {
@@ -121,21 +126,27 @@ export default class myMonitor extends HTMLContent {
         const resUl = reqBodyTemplateContent.querySelector(".res-header-data")
         this.addHeadersToUl(data.res.headers,resUl);
         // 添加返回数据
+        const resDownLoadBtn = reqBodyTemplateContent.querySelector(".res-body-data-download");
+        if(data.res.bodyBuffer.data && data.res.bodyBuffer.data.length>0) {
+            resDownLoadBtn.href = this.bufferToBlobUrl(data.res.bodyBuffer.data);
+            resDownLoadBtn.style.display = 'inline';
+        }
         const resDiv = reqBodyTemplateContent.querySelector(".res-body-data")
-        if(data.res.bodyUrl) {
-            resDiv.innerHTML=`<a class="btn btn-primary" href="/${data.res.bodyUrl}" role="button">下载数据内容</a>`
+        const resJsonPrettyCode= this.getJsonPrettyCode(this.getJsonBodyData(data.res.body));
+        if(resJsonPrettyCode.isJson) {
+            resDiv.innerHTML = resJsonPrettyCode.body;
         } else {
-            const resJsonPrettyCode= this.getJsonPrettyCode(this.getJsonBodyData(data.res.body));
-            if(resJsonPrettyCode.isJson) {
-                resDiv.innerHTML = resJsonPrettyCode.body;
-            } else {
-                resDiv.textContent = resJsonPrettyCode.body;
-            }
+            resDiv.textContent = resJsonPrettyCode.body;
         }
         // 向右侧body推数据
         const reqBody = this.shadow.querySelector(".req-body");
         reqBody.innerHTML = ''
         reqBody.appendChild(reqBodyTemplateContent)
+    }
+
+    bufferToBlobUrl(buffer,type='application/octet-stream') {
+        const fileBlob = new Blob([new Uint8Array(buffer)],{type});
+        return URL.createObjectURL(fileBlob);
     }
 
     addHeadersToUl(headers,ulEle) {
@@ -190,7 +201,6 @@ export default class myMonitor extends HTMLContent {
         const downloadA = document.createElement('a')
         downloadA.download = `${renderData.title}.md`
         downloadA.style.display = 'none';
-        console.log(renderData, 'return `'+apiMarkDownTemplate.replace(/`/g,'\\`')+'`;')
         const compileApiMarkDownTemplate= new Function('renderData', 'return `'+apiMarkDownTemplate.replace(/`/g,'\\`')+'`;');
         const blob = new Blob([compileApiMarkDownTemplate(renderData)])
         downloadA.href = URL.createObjectURL(blob)

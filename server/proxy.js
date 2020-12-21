@@ -56,7 +56,8 @@ async function dealWebRequest(req,res) {
         return res.end(`当前URL:${req.bsData.url}匹配索引${proxyTableIndex}失败，请在工作目录的.bsrc.js文件配置当前路径的转发`)
     }
     req.bsData.rawBody = await getStreamData(req);
-    req.bsData.body = Buffer.concat(req.bsData.rawBody).toString();
+    req.bsData.bodyBuffer = Buffer.concat(req.bsData.rawBody);
+    req.bsData.body = req.bsData.bodyBuffer.toString();
     const proxyConfig = bsConfig.proxyTable[proxyTableKeys[proxyTableIndex]];
     let rewritePathFunc = null;
     if(proxyConfig.pathRewrite) {
@@ -104,8 +105,8 @@ module.exports = function start (callback = (data)=>{}) {
                 url:req.bsData.url,
                 rewrite_url:req.bsData.rewrite_url,
                 method:req.method,
-                bodyUrl:req.bsData.rawBody.length<maxBytes?null:await writeDataToFile(req.bsData.rawBody,'req'),
-                body:req.bsData.rawBody.length<maxBytes?req.bsData.body:'数据过大无法显示',
+                bodyBuffer:req.bsData.bodyBuffer.toJSON(),
+                body:req.bsData.bodyBuffer.length<maxBytes?req.bsData.body:'数据过大无法显示',
                 protocol:req.bsData.protocol,
                 host:req.bsData.host,
                 target:req.bsData.target,
@@ -116,8 +117,8 @@ module.exports = function start (callback = (data)=>{}) {
                 trailers:res.trailers,
                 statusCode:res.statusCode,
                 statusMessage:res.statusMessage,
-                bodyUrl:res.bsData.rawBody.length<maxBytes?null:await writeDataToFile(res.bsData.rawBody,'res'),
-                body:res.bsData.rawBody.length<maxBytes?res.bsData.body:'数据过大无法显示',
+                bodyBuffer:res.bsData.bodyBuffer.toJSON(),
+                body:res.bsData.bodyBuffer.length<maxBytes?res.bsData.body:'数据过大无法显示',
             }
         })
     }
@@ -126,10 +127,10 @@ module.exports = function start (callback = (data)=>{}) {
         // 防止从undefined取值
         if(!req) {req={}}
         if(!req.bsData) {req.bsData={}}
-        if(!req.bsData.rawBody) {req.bsData.rawBody=[]}
+        if(!req.bsData.bodyBuffer) {req.bsData.bodyBuffer=Buffer.alloc(0)}
         if(!res) {res={}}
         if(!res.bsData) {res.bsData={}}
-        if(!res.bsData.rawBody) {res.bsData.rawBody=[]}
+        if(!res.bsData.bodyBuffer) {res.bsData.bodyBuffer=Buffer.alloc(0)}
         res.statusCode = 500
         res.statusMessage = 'OutTime'
         res.body = msg
@@ -153,7 +154,8 @@ module.exports = function start (callback = (data)=>{}) {
         }
         proxyRes.bsData = {};
         proxyRes.bsData.rawBody = await getStreamData(proxyRes);
-        proxyRes.bsData.body = decompressBody(proxyRes, Buffer.concat(proxyRes.bsData.rawBody)).toString();
+        proxyRes.bsData.bodyBuffer = decompressBody(proxyRes, Buffer.concat(proxyRes.bsData.rawBody));
+        proxyRes.bsData.body = proxyRes.bsData.bodyBuffer.toString();
         req.bsData.end_time = new Date().getTime()
         await runCallback(req, proxyRes);
     });
