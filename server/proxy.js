@@ -2,7 +2,8 @@ const bsConfig = require('../.bsrc.js');
 const {
     getConfig, listenCallBack, getConfigTipString, 
     matchProxyTableKeysUrlIndex,writeDataToFile,
-    clearFileData, createPathRewriter
+    clearFileData, createPathRewriter,
+    decompressBody,
 } = require('../util/index')
 Object.assign(bsConfig, getConfig());
 const https = require('https');
@@ -125,10 +126,10 @@ module.exports = function start (callback = (data)=>{}) {
         // 防止从undefined取值
         if(!req) {req={}}
         if(!req.bsData) {req.bsData={}}
-        if(!req.bsData.rawBody) {req.bsData.rawBody={}}
+        if(!req.bsData.rawBody) {req.bsData.rawBody=[]}
         if(!res) {res={}}
         if(!res.bsData) {res.bsData={}}
-        if(!res.bsData.rawBody) {res.bsData.rawBody={}}
+        if(!res.bsData.rawBody) {res.bsData.rawBody=[]}
         res.statusCode = 500
         res.statusMessage = 'OutTime'
         res.body = msg
@@ -136,7 +137,7 @@ module.exports = function start (callback = (data)=>{}) {
         res.writeHead(500, {
             'Content-Type': 'text/plain; charset=utf-8'
         });
-        res.end(msg);
+        res.end(msg+'\r\n'+e.stack);
     })
     proxy.on('proxyRes', async function (proxyRes, req, res) {
         if(req.bsData.cors) {
@@ -152,7 +153,7 @@ module.exports = function start (callback = (data)=>{}) {
         }
         proxyRes.bsData = {};
         proxyRes.bsData.rawBody = await getStreamData(proxyRes);
-        proxyRes.bsData.body = Buffer.concat(proxyRes.bsData.rawBody).toString();
+        proxyRes.bsData.body = decompressBody(proxyRes, Buffer.concat(proxyRes.bsData.rawBody)).toString();
         req.bsData.end_time = new Date().getTime()
         await runCallback(req, proxyRes);
     });

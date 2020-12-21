@@ -46,6 +46,7 @@ module.exports = {
          */
         '/api2': {
             target: 'https://www.bbb.com/api3', //当访问代理的api2开头的url要代理的开发服务
+            secure:false, // 对于自签证书则需要配置secure忽略证书无效
             tag:'xxxx服务'， // 配置标签
         },
         '/ws/api': {

@@ -109,8 +109,14 @@ export default class myMonitor extends HTMLContent {
         const reqUl = reqBodyTemplateContent.querySelector(".req-header-data")
         this.addHeadersToUl(data.req.headers,reqUl);
         // 添加请求数据
-        const reqDiv= reqBodyTemplateContent.querySelector(".req-body-data")
-        reqDiv.innerHTML= this.getJsonPrettyCode(this.getJsonBodyData(data.req.body));
+        const reqDiv= reqBodyTemplateContent.querySelector(".req-body-data");
+        const reqJsonPrettyCode = this.getJsonPrettyCode(this.getJsonBodyData(data.req.body));
+        if(reqJsonPrettyCode.isJson) {
+            reqDiv.innerHTML = reqJsonPrettyCode.body;
+        } else {
+            reqDiv.textContent = reqJsonPrettyCode.body;
+        }
+        
         // 添加返回头
         const resUl = reqBodyTemplateContent.querySelector(".res-header-data")
         this.addHeadersToUl(data.res.headers,resUl);
@@ -119,7 +125,12 @@ export default class myMonitor extends HTMLContent {
         if(data.res.bodyUrl) {
             resDiv.innerHTML=`<a class="btn btn-primary" href="/${data.res.bodyUrl}" role="button">下载数据内容</a>`
         } else {
-            resDiv.innerHTML= this.getJsonPrettyCode(this.getJsonBodyData(data.res.body));
+            const resJsonPrettyCode= this.getJsonPrettyCode(this.getJsonBodyData(data.res.body));
+            if(resJsonPrettyCode.isJson) {
+                resDiv.innerHTML = resJsonPrettyCode.body;
+            } else {
+                resDiv.textContent = resJsonPrettyCode.body;
+            }
         }
         // 向右侧body推数据
         const reqBody = this.shadow.querySelector(".req-body");
@@ -137,9 +148,9 @@ export default class myMonitor extends HTMLContent {
 
     getJsonPrettyCode(jsonBodyData) {
         if(jsonBodyData.isJson) {
-            return prismjs.highlight(jsonBodyData.body,prismjs.languages.javascript,'javascript');
+            jsonBodyData.body = prismjs.highlight(jsonBodyData.body,prismjs.languages.javascript,'javascript');
         }
-        return jsonBodyData.body;
+        return jsonBodyData;
     }
 
     getJsonBodyData(strBody) {

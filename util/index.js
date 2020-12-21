@@ -6,6 +6,8 @@ const fileWriteFile = util.promisify(fs.writeFile);
 const fileReaddir = util.promisify(fs.readdir);
 const fileUnlink = util.promisify(fs.unlink);
 const fileStat = util.promisify(fs.stat);
+const zlib = require('zlib');
+
 function getStaticPath () {
     return path.join(path.dirname(__dirname), 'server','static');
 }
@@ -116,11 +118,24 @@ function parsePathRewriteRules(rewriteConfig) {
 
 module.exports.getStaticPath = getStaticPath;
 
-module.exports.rsaPrivateKeyEncode = function (privateKey, buffer) {
-    return crypto.privateEncrypt(privateKey, buffer);
+module.exports.decompressBody = function(res, buffer) {
+    if(!res.headers) {return buffer;}
+    const headerList = Object.keys(res.headers);
+    let contentEncoding = null;
+    for(const header of headerList){
+        if(String(header).toLowerCase()==='content-encoding') {
+            contentEncoding = String(res.headers[header]).toLowerCase();
+            break;
+        }
+    }
+    if(!contentEncoding){return buffer;}
+    switch(contentEncoding) {
+        case 'br':
+            return zlib.brotliDecompressSync(buffer)
+        case 'gzip':
+            return zlib.gunzipSync(buffer)
+        case 'deflate':
+            return zlib.inflateSync(buffer)
+    }
+    return buffer;
 }
-
-module.exports.rsaPublicKeyDecode = function (publicKey, buffer) {
-    return crypto.publicDecrypt(publicKey, buffer);
-}
-
