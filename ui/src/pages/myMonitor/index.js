@@ -223,7 +223,9 @@ export default class myMonitor extends HTMLContent {
         };
         this.ws.onclose = () => {
             if(!this.ws.closeBySelf) {
-                if(confirm('连接已断开是否重连?\r\n可能是太久没有使用到资源，也可能是网络不佳导致关闭了。')){
+                if(confirm('连接已断开是否重连?'+
+                '\r\n可能是太久没有使用到资源，也可能是网络不佳导致关闭了。'+
+                '\r\n如果您是第一次使用，还可能是您使用了请求转发没有配置支持websocket。')){
                     clearInterval(this.ws.pingIntervalHandle);
                     this.startSocket(config);
                 } else {
