@@ -17,7 +17,7 @@
 * 前端需要修改API请求地址到代理服务地址
 
 # 使用方法
-## 0x1创建`.bsrc.js`文件到工作目录中
+## 0x1 创建`.bsrc.js`文件到工作目录中
 首先需要在你的工作目录中增加`.bsrc.js`文件,目录结构如下：
 ```
 /your-work-dir
@@ -79,19 +79,38 @@ module.exports = {
     monitorPort:8555,// 监控服务页面服务端口，可以通过这个端口打开UI界面
 }
 ```
-## 0x2安装全局包
+## 0x2 安装全局包
 ```sh
 # 这里也可以使用yarn
 npm install before-server -g
 ```
-## 0x3在工作目录启动服务
+## 0x3 在工作目录启动服务
 ```sh
 # dir: /your-work-dir
 before-server # 或者 `npx before-server`
 # 也可以使用pm2启动，如 pm2 start before-server # 但注意pm2需要在配置文件目录启动
 ```
 
-最后前端(包括移动端和web端以及小程序端)修改请求服务地址到前置服务，默认http为8000端口,默认https为8443。
+## 0x4 修改前端项目的API接口请求地址
+最后前端(包括移动端和web端以及小程序端)修改请求API接口地址到前置服务，默认http为8000端口,默认https为8443。
+
+比如.bsrc.js配置为如下时:
+```js
+module.exports = {
+    proxyTable:{
+        '/': {
+            target: 'http://127.0.0.1:80', 
+            tag:'根服务'， // 配置标签
+        }
+    },
+    httpPort:8000
+}
+```
+则修改API接口地址为8000
+```sh
+# API_HOST:http://127.0.0.1:80
+API_HOST:http://127.0.0.1:8000
+```
 
 完成以上工作后，就可以使用浏览器打开8555端口的UI界面，来查看发送的请求。
 
