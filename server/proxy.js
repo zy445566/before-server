@@ -134,11 +134,11 @@ module.exports = function start (callback = (data)=>{}) {
         res.statusCode = 500
         res.statusMessage = 'OutTime'
         res.body = msg
-        await runCallback(req, res);
         res.writeHead(500, {
             'Content-Type': 'text/plain; charset=utf-8'
         });
         res.end(msg+'\r\n'+e.stack);
+        await runCallback(req, res);
     })
     proxy.on('proxyRes', async function (proxyRes, req, res) {
         if(req.bsData.cors) {
