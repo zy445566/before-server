@@ -67,9 +67,9 @@ module.exports = {
     httpPort:8000
 }
 ```
-则修改API接口地址为8000，
+修改你的前端项目的请求API接口地址，如上面配置例子则修改API接口地址为8000，
 ```sh
-# API_HOST:http://api.test.com:7001
+# API_HOST:http://api.test.com:7001 # 比如原来前端项目是请求http://api.test.com:7001来获取接口数据的
 API_HOST:http://127.0.0.1:8000 # 如本地启动服务可直接访问127.0.0.1:8000，建议部署到服务器中
 ```
 
