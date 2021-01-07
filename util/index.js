@@ -2,11 +2,17 @@ const fs =require('fs');
 const path =require('path');
 const crypto =require('crypto');
 const util = require('util');
+const os = require('os');
 const fileWriteFile = util.promisify(fs.writeFile);
 const fileReaddir = util.promisify(fs.readdir);
 const fileUnlink = util.promisify(fs.unlink);
 const fileStat = util.promisify(fs.stat);
 const zlib = require('zlib');
+
+
+function printText(text) {
+    process.stdout.write(text + os.EOL);
+};
 
 function getStaticPath () {
     return path.join(path.dirname(__dirname), 'server','static');
@@ -17,9 +23,9 @@ function hash256 (data,encoding='hex') {
 module.exports.listenCallBack = function(type,protocol,hostname) {
     return ()=>{
         if(type==='proxy') {
-            console.log(`${type} ${protocol} server listening ${protocol}://${hostname}/`)
+            printText(`${type} ${protocol} server listening ${protocol}://${hostname}/`)
         } else {
-            console.log(`${type} server listening ${protocol}://${hostname}/`)
+            printText(`${type} server listening ${protocol}://${hostname}/`)
         }
         
     }
@@ -66,8 +72,11 @@ module.exports.getConfig = function() {
     return {}
 }
 
+module.exports.printText = printText;
+
 module.exports.matchProxyTableKeysUrlIndex = function(url,proxyTableKeys=[]) {
     let index = -1
+    if(!url){return index;}
     for(let i=0;i<proxyTableKeys.length;i++) {
         if(url.indexOf(proxyTableKeys[i])>=0) {
             index = i;

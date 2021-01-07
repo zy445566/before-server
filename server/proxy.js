@@ -3,7 +3,7 @@ const {
     getConfig, listenCallBack, getConfigTipString, 
     matchProxyTableKeysUrlIndex,writeDataToFile,
     clearFileData, createPathRewriter,
-    decompressBody,
+    decompressBody, printText
 } = require('../util/index')
 Object.assign(bsConfig, getConfig());
 const https = require('https');
@@ -137,7 +137,9 @@ module.exports = function start (callback = (data)=>{}) {
         res.writeHead(500, {
             'Content-Type': 'text/plain; charset=utf-8'
         });
-        res.end(msg+'\r\n'+e.stack);
+        const errorMsg = msg+'\r\n'+e.stack;
+        printText(errorMsg);
+        res.end(errorMsg);
         await runCallback(req, res);
     })
     proxy.on('proxyRes', async function (proxyRes, req, res) {
