@@ -55,6 +55,7 @@ module.exports = function start () {
             '\r\n'
         );
         let fifterConfig = {key:""}
+        let is_open_socket = true;
         socket.on('data', (data) => {
             const frame = decodeSocketFrame(data);
             if(frame.opcode===1) {
@@ -69,10 +70,10 @@ module.exports = function start () {
                 }
             }
             if(frame.opcode===8) {
-                socket.end()
+                is_open_socket = false;
+                socket.end();
             }
         });
-        let is_open_socket = true;
         let sendProxyRequestInfoFunc = function(eventData) {
             if(fifterConfig.key) {
                 const proxyTableIndex = matchProxyTableKeysUrlIndex(eventData.req.url,proxyTableKeys);
