@@ -72,12 +72,13 @@ export default class myMonitor extends HTMLContent {
                 badge = `<span class="badge badge-pill badge-danger">${data.res.statusCode}</span>`
             }
             reqItemTemplateContent.querySelector(".req-item").innerHTML = badge + completeUrl.pathname;
-            reqItemTemplateContent.querySelector(".req-item").addEventListener('click',(event)=>{
+            const that = this;
+            reqItemTemplateContent.querySelector(".req-item").addEventListener('click',function (_event){
                 for(const e of reqListDom.children) {e.className = e.className.replace('active','')}
-                if(event.target.className.indexOf('active')==-1) {
-                    event.target.className += ' active'
+                if(this.className.indexOf('active')==-1) {
+                    this.className += ' active'
                 }
-                this.showBody(data);
+                that.showBody(data);
             })
             reqListDom.appendChild(reqItemTemplateContent)
         })
