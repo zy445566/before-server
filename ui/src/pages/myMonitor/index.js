@@ -3,6 +3,7 @@ import {HTMLContent, MyRouter} from 'web-components-content'
 const {getQuery} = MyRouter;
 import apiMarkDownTemplate from './api-template.md'
 import * as prismjs from 'prismjs'
+import * as _prismjsJson  from 'prismjs/components/prism-json';
 export default class myMonitor extends HTMLContent {
     connectedCallback() {
         this.ws = null;
@@ -159,7 +160,7 @@ export default class myMonitor extends HTMLContent {
 
     getJsonPrettyCode(jsonBodyData) {
         if(jsonBodyData.isJson) {
-            jsonBodyData.body = prismjs.highlight(jsonBodyData.body,prismjs.languages.javascript,'javascript');
+            jsonBodyData.body = prismjs.highlight(jsonBodyData.body,prismjs.languages.json,'json');
         }
         return jsonBodyData;
     }
