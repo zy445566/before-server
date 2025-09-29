@@ -4,7 +4,9 @@
 ![Next.js](https://img.shields.io/badge/Next.js-14.x-blue)
 ![Docker](https://img.shields.io/badge/Docker-支持-success)
 
-一个基于Next.js的前置HTTP代理抓包服务和日志记录，方便用于开发调试。
+一个基于Next.js的前置HTTP代理抓包服务和日志记录，方便用于开发调试。2.0版本全面拥抱Ai编码。
+
+1.0版本看这里：https://github.com/zy445566/before-server/blob/v1.0/README.md
 
 ## 功能特性
 
