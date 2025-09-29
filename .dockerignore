@@ -1,0 +1,15 @@
+node_modules
+.next
+dist
+*.log
+.env
+.env.local
+.DS_Store
+*.md
+.git
+.gitignore
+.vscode
+.idea
+*.tmp
+*.bak
+*.swp

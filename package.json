@@ -1,50 +1,27 @@
 {
   "name": "before-server",
-  "version": "1.0.70",
-  "description": "before server for query client request",
-  "main": "index.js",
+  "version": "2.0.0",
+  "main": "proxy.js",
   "scripts": {
-    "build:ui": "npx rollup -c",
-    "prepare": "npm run build:ui",
-    "bin": "node ./bin/before-server.js",
-    "dev:ui": "npx rollup -c --watch",
-    "dev:server": "nodemon ./bin/before-server.js",
-    "test": "node ./test.js"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
-  "bin": {
-    "before-server": "./bin/before-server.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/zy445566/before-server.git"
-  },
-  "keywords": [
-    "before",
-    "server",
-    "client",
-    "request"
-  ],
-  "author": "zy445566",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/zy445566/before-server/issues"
-  },
-  "homepage": "https://github.com/zy445566/before-server#readme",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
   "dependencies": {
-    "http-proxy": "^1.18.1",
-    "koa": "^2.11.0",
-    "koa-router": "^8.0.8",
-    "koa-static": "^5.0.0",
-    "prismjs": "^1.22.0",
-    "stream-array": "^1.1.2",
-    "web-components-content": "^1.0.9"
+    "next": "^15.5.4",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
-    "@rollup/plugin-alias": "^3.1.1",
-    "@rollup/plugin-commonjs": "^17.0.0",
-    "@rollup/plugin-node-resolve": "^9.0.0",
-    "@rollup/pluginutils": "^4.1.0",
-    "nodemon": "^2.0.4",
-    "rollup": "^2.34.2"
+    "@types/node": "^24.5.2",
+    "@types/react": "^19.1.15",
+    "@types/uuid": "^10.0.0",
+    "typescript": "^5.9.2"
   }
 }
