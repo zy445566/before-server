@@ -22,10 +22,14 @@ export default function handler(
   }
 
   try {
-    const { targetUrl } = req.body;
+    const { targetUrl, port } = req.body;
     
     if (!targetUrl) {
       return res.status(400).json({ success: false, error: '缺少目标URL参数' });
+    }
+
+    if (port && (typeof port !== 'number' || port < 1024 || port > 65535)) {
+      return res.status(400).json({ success: false, error: '端口号必须在1024-65535之间' });
     }
 
     // 验证URL格式
@@ -35,7 +39,7 @@ export default function handler(
       return res.status(400).json({ success: false, error: 'URL格式无效' });
     }
 
-    const proxyInfo = proxyManager.createProxy(targetUrl);
+    const proxyInfo = proxyManager.createProxy(targetUrl, port);
     
     return res.status(200).json({
       success: true,

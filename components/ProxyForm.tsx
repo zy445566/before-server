@@ -13,6 +13,7 @@ interface ProxyFormProps {
 
 export default function ProxyForm({ onProxyCreated }: ProxyFormProps) {
   const [targetUrl, setTargetUrl] = useState<string>('');
+  const [port, setPort] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
@@ -41,7 +42,10 @@ export default function ProxyForm({ onProxyCreated }: ProxyFormProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ targetUrl }),
+        body: JSON.stringify({ 
+          targetUrl,
+          ...(port && { port: Number(port) })
+        }),
       });
 
       const data = await response.json();
@@ -82,6 +86,23 @@ export default function ProxyForm({ onProxyCreated }: ProxyFormProps) {
             placeholder="例如：http://example.com 或 http://192.168.1.100:8080"
             disabled={isLoading}
           />
+        </div>
+        <div className="form-group">
+          <label htmlFor="port">端口号（可选）</label>
+          <input
+            type="number"
+            id="port"
+            className="form-control"
+            value={port || ''}
+            onChange={(e) => setPort(e.target.value ? parseInt(e.target.value) : null)}
+            placeholder="留空则自动分配"
+            min="1024"
+            max="65535"
+            disabled={isLoading}
+          />
+          <small className="form-text text-muted">
+            端口范围：1024-65535
+          </small>
         </div>
         <button
           type="submit"

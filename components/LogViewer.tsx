@@ -25,7 +25,8 @@ export default function LogViewer({ proxyId }: LogViewerProps) {
   const [targetUrl, setTargetUrl] = useState<string>('');
   const [proxyUrl, setProxyUrl] = useState<string>('');
 
-  const fetchLogs = async (incremental = false) => {
+  const fetchLogs = async (event?: React.MouseEvent | boolean) => {
+    const incremental = typeof event === 'boolean' ? event : false;
     try {
       let url = `/api/proxies/logs/${proxyId}`;
       if (incremental && logs.length > 0) {
@@ -110,7 +111,8 @@ export default function LogViewer({ proxyId }: LogViewerProps) {
       setRefreshInterval(null);
     };
 
-    const safeFetchLogs = async (incremental = false) => {
+    const safeFetchLogs = async (event?: React.MouseEvent | boolean) => {
+    const incremental = typeof event === 'boolean' ? event : false;
       if (!isActive || isRefreshing) return;
       
       try {
@@ -184,7 +186,7 @@ export default function LogViewer({ proxyId }: LogViewerProps) {
             代理URL: <a href={proxyUrl} target="_blank" rel="noopener noreferrer">{proxyUrl}</a>
           </p>
         </div>
-        <button className="btn btn-primary" onClick={fetchLogs}>刷新日志</button>
+        <button className="btn btn-primary" onClick={() => fetchLogs(true)}>刷新日志</button>
       </div>
 
       {logs.length === 0 ? (

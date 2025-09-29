@@ -1,5 +1,5 @@
 # 第一阶段：构建应用
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 # 设置工作目录
 WORKDIR /app
@@ -18,7 +18,7 @@ COPY . .
 RUN npm run build
 
 # 第二阶段：运行应用
-FROM node:18-alpine
+FROM node:20-alpine
 
 # 设置工作目录
 WORKDIR /app
@@ -31,7 +31,6 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/lib ./lib
 
 # 暴露端口 (Next.js默认3000 + 代理服务端口范围)
-EXPOSE 3000
 EXPOSE 3000-20000
 
 # 启动命令

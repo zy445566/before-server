@@ -32,6 +32,11 @@ interface ProxyInfoResponse {
   createdAt: Date;
 }
 
+interface CreateProxyOptions {
+  targetUrl: string;
+  port?: number;
+}
+
 // 定义连接日志返回接口
 interface ConnectionLogResponse {
   connectionId: string;
@@ -56,10 +61,23 @@ class ProxyManager {
   }
 
   // 创建新的代理服务
-  createProxy(targetUrl: string): ProxyInfoResponse {
+  createProxy(targetUrl: string, port?: number): ProxyInfoResponse;
+  createProxy(options: CreateProxyOptions): ProxyInfoResponse;
+  createProxy(targetUrlOrOptions: string | CreateProxyOptions, port?: number): ProxyInfoResponse {
+    let targetUrl: string;
+    let portNumber: number | undefined;
+    
+    if (typeof targetUrlOrOptions === 'string') {
+      targetUrl = targetUrlOrOptions;
+      portNumber = port;
+    } else {
+      targetUrl = targetUrlOrOptions.targetUrl;
+      portNumber = targetUrlOrOptions.port;
+    }
     try {
       const proxyId = uuidv4();
       const targetObj = new URL(targetUrl);
+      portNumber = portNumber || undefined; // Ensure it's either number or undefined
       const clientOpts = { 
         host: targetObj.hostname, 
         port: parseInt(targetObj.port) || (targetObj.protocol === 'https:' ? 443 : 80) 
@@ -119,7 +137,7 @@ class ProxyManager {
         });
       });
 
-      proxy.listen(0); // 随机分配可用端口
+      proxy.listen(portNumber || 0); // 使用指定端口或随机分配
       
       const address = proxy.address();
       if (!address || typeof address === 'string') {
@@ -165,7 +183,7 @@ class ProxyManager {
   }
 
   // 获取特定代理的日志
-  getProxyLogs(proxyId: string, since?: Date): ConnectionLogResponse[] {
+  getProxyLogs(proxyId: string, since?: Date | null): ConnectionLogResponse[] {
     if (!this.proxies.has(proxyId)) {
       throw new Error('代理服务不存在');
     }

@@ -22,6 +22,8 @@
     "@types/node": "^24.5.2",
     "@types/react": "^19.1.15",
     "@types/uuid": "^10.0.0",
+    "eslint": "9.36.0",
+    "eslint-config-next": "15.5.4",
     "typescript": "^5.9.2"
   }
 }
