@@ -129,10 +129,16 @@ class ProxyManager {
         });
 
         socket.on('close', () => {
+          setInterval(()=>{
+            connectionLogs.delete(connectionId);
+          }, 1000*60*10)
           client.end();
         });
 
         client.on('close', () => {
+          setInterval(()=>{
+            connectionLogs.delete(connectionId);
+          }, 1000*60*10)
           socket.end();
         });
       });
@@ -183,7 +189,7 @@ class ProxyManager {
   }
 
   // 获取特定代理的日志
-  getProxyLogs(proxyId: string, since?: Date | null): ConnectionLogResponse[] {
+  getProxyLogs(proxyId: string): ConnectionLogResponse[] {
     if (!this.proxies.has(proxyId)) {
       throw new Error('代理服务不存在');
     }
@@ -197,27 +203,12 @@ class ProxyManager {
     
     for (const [connectionId, log] of connectionLogs.entries()) {
       // 如果没有since参数，或者连接创建时间大于since
-      if (!since || new Date(log.createdAt) > since) {
-        result.push({
+      result.push({
           connectionId: log.id,
           createdAt: log.createdAt,
           clientToServer: log.clientToServer,
           serverToClient: log.serverToClient
-        });
-      } else {
-        // 检查连接内是否有消息时间大于since
-        const filteredClientToServer = log.clientToServer.filter(msg => new Date(msg.timestamp) > since);
-        const filteredServerToClient = log.serverToClient.filter(msg => new Date(msg.timestamp) > since);
-        
-        if (filteredClientToServer.length > 0 || filteredServerToClient.length > 0) {
-          result.push({
-            connectionId: log.id,
-            createdAt: log.createdAt,
-            clientToServer: filteredClientToServer,
-            serverToClient: filteredServerToClient
-          });
-        }
-      }
+      });
     }
     
     return result;

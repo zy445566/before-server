@@ -23,10 +23,8 @@ export default function LogsPage() {
   return (
     <Layout title="代理日志">
       <div style={{ marginBottom: '20px' }}>
-        <Link href="/" legacyBehavior>
-          <a style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-            &larr; 返回代理列表
-          </a>
+        <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+          &larr; 返回代理列表
         </Link>
       </div>
       

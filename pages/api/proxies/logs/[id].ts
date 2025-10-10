@@ -1,23 +1,23 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import proxyManager from '../../../../lib/proxyManager';
 
-type LogData = {
-  timestamp: Date;
-  data: string;
-}
-
-type ConnectionLog = {
-  connectionId: string;
-  createdAt: Date;
-  clientToServer: LogData[];
-  serverToClient: LogData[];
+type LogListData = {
+  connectionId:string,
+  createdAt:Date,
+  data:string,
+  timestamp:Date,
+  direction:'clientToServer'|'serverToClient'
 }
 
 type ResponseData = {
   success: boolean;
-  logs?: ConnectionLog[];
+  logs?: LogListData[];
   error?: string;
   message?: string;
+  // 新增分页信息
+  total?: number;
+  page?: number;
+  pageSize?: number;
 }
 
 export default function handler(
@@ -36,21 +36,61 @@ export default function handler(
     }
 
     try {
-      const sinceParam = req.query.since;
-      let sinceDate: Date | null = null;
-      
-      if (sinceParam && !Array.isArray(sinceParam)) {
-        sinceDate = new Date(decodeURIComponent(sinceParam));
-        if (isNaN(sinceDate.getTime())) {
-          sinceDate = null;
+
+      // 分页参数（仅在非增量模式下生效）
+      const pageParam = req.query.page;
+      const pageSizeParam = req.query.pageSize;
+      let page = 1;
+      let pageSize = 10;
+
+      if (pageParam && !Array.isArray(pageParam)) {
+        const n = parseInt(pageParam, 10);
+        if (!isNaN(n) && n > 0) page = n;
+      }
+      if (pageSizeParam && !Array.isArray(pageSizeParam)) {
+        const n = parseInt(pageSizeParam, 10);
+        if (!isNaN(n) && n > 0 && n <= 200) pageSize = n; // 上限保护防止一次返回过大
+      }
+
+      // 获取所有日志
+      const allConnLogs = proxyManager.getProxyLogs(id);
+
+      const allLogs:{connectionId:string,createdAt:Date,data:string,timestamp:Date,direction:'clientToServer'|'serverToClient'}[] = [];
+      for(const connLog of allConnLogs) {
+        for(const log of connLog?.clientToServer||[] ) {
+          allLogs.push({
+            connectionId: connLog.connectionId,
+            createdAt: connLog.createdAt,
+            data: log.data,
+            timestamp: log.timestamp,
+            direction: 'clientToServer'
+          });
+        }
+        for(const log of connLog?.serverToClient||[] ) {
+          allLogs.push({
+            connectionId: connLog.connectionId,
+            createdAt: connLog.createdAt,
+            data: log.data,
+            timestamp: log.timestamp,
+            direction: 'serverToClient'
+          });
         }
       }
 
-      const logs = proxyManager.getProxyLogs(id, sinceDate);
+      // 统一按创建时间倒序，便于查看最新连接
+      const sorted = [...allLogs].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+      const total = sorted.length;
+      const start = (page - 1) * pageSize;
+      const end = start + pageSize;
+      const paged = start < total ? sorted.slice(start, end) : [];
       
       return res.status(200).json({
         success: true,
-        logs
+        logs: paged,
+        total,
+        page,
+        pageSize
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知错误';
