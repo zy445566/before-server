@@ -214,6 +214,30 @@ class ProxyManager {
     return result;
   }
 
+  getProxyConnLogs(proxyId: string, connectionId: string): ConnectionLogResponse | null {
+    if (!this.proxies.has(proxyId)) {
+      throw new Error('代理服务不存在');
+    }
+
+    const connectionLogs = this.logs.get(proxyId);
+    if (!connectionLogs) {
+      return null;
+    }
+
+    const log = connectionLogs.get(connectionId);
+
+    if (!log) {
+      return null;
+    }
+    
+    return {
+          connectionId: log.id,
+          createdAt: log.createdAt,
+          clientToServer: log.clientToServer,
+          serverToClient: log.serverToClient
+      };
+  }
+
   // 关闭特定代理服务
   closeProxy(proxyId: string): OperationResult {
     if (!this.proxies.has(proxyId)) {

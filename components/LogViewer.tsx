@@ -197,7 +197,7 @@ export default function LogViewer({ proxyId }: LogViewerProps) {
         logs.map((log) => (
           <div key={uuidv4()} className="log-item" style={{ marginBottom: '20px' }}>
             <div className="log-header">
-              <div><strong>连接ID:</strong> {log.connectionId.substring(0, 8)}...</div>
+              <div><strong>连接ID:</strong> <Link href={`/logs/connection/${proxyId}/${log.connectionId}`}>{log.connectionId.substring(0, 8)}...</Link></div>
               <div><strong>创建时间:</strong> {new Date(log.createdAt).toLocaleString()}</div>
             </div>
             
