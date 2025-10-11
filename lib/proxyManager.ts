@@ -1,4 +1,6 @@
 import * as net from 'node:net';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { v4 as uuidv4 } from 'uuid';
 
 // 定义日志数据接口
@@ -58,6 +60,39 @@ class ProxyManager {
   constructor() {
     this.proxies = new Map<string, ProxyInfo>(); // 存储所有代理服务
     this.logs = new Map<string, Map<string, ConnectionLog>>(); // 存储所有代理日志
+
+    // 在启动时尝试根据配置文件创建代理
+    // 支持环境变量 PROXY_CONFIG_PATH 指定路径，否则默认使用项目根目录下的 proxies.config.json
+    try {
+      const configPathEnv = process.env.PROXY_CONFIG_PATH;
+      const defaultPath = path.resolve(process.cwd(), 'proxies.config.json');
+      const configPath = configPathEnv ? path.resolve(process.cwd(), configPathEnv) : defaultPath;
+
+      if (fs.existsSync(configPath)) {
+        const raw = fs.readFileSync(configPath, 'utf-8');
+        const parsed = JSON.parse(raw);
+
+        // 支持格式：
+        // { "proxies": [ { "targetUrl": "...", "port": 1234 }, ... ] }
+        const list = Array.isArray(parsed?.proxies) ? parsed.proxies : [];
+
+        if (Array.isArray(list)) {
+          for (const item of list) {
+            if (!item || typeof item.targetUrl !== 'string') continue;
+            const url = item.targetUrl;
+            const port = typeof item.port === 'number' ? item.port : undefined;
+            try {
+              this.createProxy(url, port);
+            } catch (e) {
+              console.error('根据配置创建代理失败:', e);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      // 读取配置失败不影响服务启动
+      console.warn('启动时读取代理配置失败（已忽略）：', (e as Error)?.message || e);
+    }
   }
 
   // 创建新的代理服务
@@ -267,6 +302,12 @@ class ProxyManager {
 }
 
 // 创建单例实例
-const proxyManager = new ProxyManager();
+declare global {
+  // eslint-disable-next-line no-var
+  var __proxyManager__: ProxyManager | undefined;
+}
+
+// 使用全局变量在开发模式下持久化单例，避免 Next.js HMR 造成重复实例
+const proxyManager = globalThis.__proxyManager__ ?? (globalThis.__proxyManager__ = new ProxyManager());
 
 export default proxyManager;
