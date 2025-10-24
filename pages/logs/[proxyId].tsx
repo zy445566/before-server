@@ -5,9 +5,9 @@ import LogViewer from '../../components/LogViewer';
 
 export default function LogsPage() {
   const router = useRouter();
-  const { id } = router.query;
+  const { proxyId } = router.query;
 
-  if (!id) {
+  if (!proxyId) {
     return (
       <Layout title="加载中 - 代理日志">
         <div className="loading">
@@ -18,7 +18,7 @@ export default function LogsPage() {
   }
 
   // 确保id是字符串类型
-  const proxyId = Array.isArray(id) ? id[0] : id;
+  const proxyIdStr = Array.isArray(proxyId) ? proxyId[0] : proxyId;
 
   return (
     <Layout title="代理日志">
@@ -28,7 +28,7 @@ export default function LogsPage() {
         </Link>
       </div>
       
-      <LogViewer proxyId={proxyId} />
+      <LogViewer proxyId={proxyIdStr} />
     </Layout>
   );
 }

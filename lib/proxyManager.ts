@@ -24,6 +24,7 @@ interface ProxyInfo {
   port: number;
   createdAt: Date;
   server: net.Server;
+  watchTime: number;
 }
 
 // 定义代理信息返回接口（不包含server对象）
@@ -121,36 +122,51 @@ class ProxyManager {
       const connectionLogs = new Map<string, ConnectionLog>(); // 存储每个连接的日志
       
       const proxy = net.createServer((socket: net.Socket) => {
+        const watchTime = this.proxies.get(proxyId)?.watchTime || 0;
+        let isWatching = false;
+        // 如果watchTime大于当前时间-30s，则认为是正在观看的连接，否则认为不需要记录日志，同时清空日志
+        if(watchTime>Date.now()-30*1000) {
+          isWatching = true;
+        } else {
+          // 注意只有新的请求进来后才会清空，否则将继续保留
+          connectionLogs.clear();
+        }
         const connectionId = uuidv4();
-        connectionLogs.set(connectionId, {
-          id: connectionId,
-          clientToServer: [],
-          serverToClient: [],
-          createdAt: new Date()
-        });
-
+        if(isWatching) {
+          connectionLogs.set(connectionId, {
+            id: connectionId,
+            clientToServer: [],
+            serverToClient: [],
+            createdAt: new Date()
+          });
+        }
+        
         const client = net.createConnection(clientOpts);
         
         socket.on('data', (data: Buffer) => {
-          const dataStr = data.toString();
-          const logs = connectionLogs.get(connectionId);
-          if (logs) {
-            logs.clientToServer.push({
-              timestamp: new Date(),
-              data: dataStr
-            });
+          if(isWatching) {
+            const dataStr = data.toString();
+            const logs = connectionLogs.get(connectionId);
+            if (logs) {
+              logs.clientToServer.push({
+                timestamp: new Date(),
+                data: dataStr
+              });
+            }
           }
           client.write(data);
         });
         
         client.on('data', (data: Buffer) => {
-          const dataStr = data.toString();
-          const logs = connectionLogs.get(connectionId);
-          if (logs) {
-            logs.serverToClient.push({
-              timestamp: new Date(),
-              data: dataStr
-            });
+          if(isWatching) {
+            const dataStr = data.toString();
+            const logs = connectionLogs.get(connectionId);
+            if (logs) {
+              logs.serverToClient.push({
+                timestamp: new Date(),
+                data: dataStr
+              });
+            }
           }
           socket.write(data);
         });
@@ -164,16 +180,10 @@ class ProxyManager {
         });
 
         socket.on('close', () => {
-          setInterval(()=>{
-            connectionLogs.delete(connectionId);
-          }, 1000*60*10)
           client.end();
         });
 
         client.on('close', () => {
-          setInterval(()=>{
-            connectionLogs.delete(connectionId);
-          }, 1000*60*10)
           socket.end();
         });
       });
@@ -190,6 +200,7 @@ class ProxyManager {
         targetUrl,
         port: address.port,
         createdAt: new Date(),
+        watchTime: 0,
         server: proxy
       };
       
@@ -223,11 +234,20 @@ class ProxyManager {
     return result;
   }
 
+  // 设置代理服务的watchTime
+  setWatchTime(proxyId: string) {
+    const proxy = this.proxies.get(proxyId);
+    if(proxy) {
+      proxy.watchTime = Date.now();
+    }
+  }
+
   // 获取特定代理的日志
   getProxyLogs(proxyId: string): ConnectionLogResponse[] {
     if (!this.proxies.has(proxyId)) {
       throw new Error('代理服务不存在');
     }
+    this.setWatchTime(proxyId)
 
     const connectionLogs = this.logs.get(proxyId);
     if (!connectionLogs) {
@@ -249,10 +269,12 @@ class ProxyManager {
     return result;
   }
 
+  // 获取特定代理的日志
   getProxyConnLogs(proxyId: string, connectionId: string): ConnectionLogResponse | null {
     if (!this.proxies.has(proxyId)) {
       throw new Error('代理服务不存在');
     }
+    this.setWatchTime(proxyId)
 
     const connectionLogs = this.logs.get(proxyId);
     if (!connectionLogs) {

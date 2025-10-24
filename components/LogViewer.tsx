@@ -13,9 +13,10 @@ interface LogListData  {
 
 interface LogViewerProps {
   proxyId: string;
+  connectionId?: string;
 }
 
-export default function LogViewer({ proxyId }: LogViewerProps) {
+export default function LogViewer({ proxyId, connectionId }: LogViewerProps) {
   const [logs, setLogs] = useState<LogListData[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
@@ -26,10 +27,12 @@ export default function LogViewer({ proxyId }: LogViewerProps) {
   const [pageSize, setPageSize] = useState<number>(10);
   const [total, setTotal] = useState<number>(0);
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState<boolean>(true);
+  // 自动刷新定时停止状态
+  const [showAutoRefreshWarning, setShowAutoRefreshWarning] = useState<boolean>(false);
 
   const fetchLogs = async () => {
     try {
-      let url = `/api/proxies/logs/${proxyId}`;
+      let url = connectionId? `/api/proxies/logs/${proxyId}/connection/${connectionId}`:`/api/proxies/logs/${proxyId}`;
       const params = new URLSearchParams();
       params.set('page', String(page));
       params.set('pageSize', String(pageSize));
@@ -77,12 +80,17 @@ export default function LogViewer({ proxyId }: LogViewerProps) {
   useEffect(() => {
     let isActive = true;
     let refreshTimer: NodeJS.Timeout | null = null;
+    let autoStopTimer: NodeJS.Timeout | null = null;
     let isRefreshing = false;
 
     const stopAllRefreshes = () => {
       if (refreshTimer) {
         clearInterval(refreshTimer);
         refreshTimer = null;
+      }
+      if (autoStopTimer) {
+        clearTimeout(autoStopTimer);
+        autoStopTimer = null;
       }
     };
 
@@ -111,6 +119,17 @@ export default function LogViewer({ proxyId }: LogViewerProps) {
 
         if (!refreshTimer && isActive && autoRefreshEnabled) {
           refreshTimer = setInterval(() => safeFetchLogs(), 5000);
+          
+          // 启动15分钟自动停止定时器
+          if (!autoStopTimer) {
+            autoStopTimer = setTimeout(() => {
+              if (isActive && autoRefreshEnabled) {
+                setShowAutoRefreshWarning(true);
+                setAutoRefreshEnabled(false);
+                stopAllRefreshes();
+              }
+            }, 15* 60 * 1000); // 15分钟
+          }
         }
       } catch (error) {
         console.error('刷新日志失败:', error);
@@ -128,6 +147,33 @@ export default function LogViewer({ proxyId }: LogViewerProps) {
     };
   }, [proxyId, page, pageSize, autoRefreshEnabled]);
 
+  const handleContinueAutoRefresh = () => {
+    setShowAutoRefreshWarning(false);
+    // 重新启动自动刷新
+    setAutoRefreshEnabled(true);
+    // 重新启动15分钟定时器
+    setAutoRefreshEnabled(true);
+  };
+
+  const handleStopAutoRefresh = () => {
+    setShowAutoRefreshWarning(false);
+  };
+
+  const [showStopConfirm, setShowStopConfirm] = useState<boolean>(false);
+
+  const handleStopAutoRefreshClick = () => {
+    setShowStopConfirm(true);
+  };
+
+  const handleConfirmStop = () => {
+    setShowStopConfirm(false);
+    setAutoRefreshEnabled(false);
+  };
+
+  const handleCancelStop = () => {
+    setShowStopConfirm(false);
+  };
+
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   if (isLoading) {
@@ -144,18 +190,111 @@ export default function LogViewer({ proxyId }: LogViewerProps) {
           {targetUrl && <p>目标URL: <a href={targetUrl} target="_blank" rel="noopener noreferrer">{targetUrl}</a></p>}
           {proxyUrl && <p>代理URL: <a href={proxyUrl} target="_blank" rel="noopener noreferrer">{proxyUrl}</a></p>}
         </div>
-        <Link href="/" className="btn btn-primary" style={{ marginTop: '16px' }}>
+        {connectionId ? <Link href={`/logs/${Array.isArray(proxyId) ? proxyId[0] : proxyId}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          &larr; 返回代理日志
+        </Link>:<Link href="/" className="btn btn-primary" style={{ marginTop: '16px' }}>
           返回代理列表
-        </Link>
+        </Link>}
+        
       </div>
     );
   }
 
   return (
-    <div className="card">
+    <>
+      {/* 自动刷新警告弹窗 */}
+      {showAutoRefreshWarning && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '24px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            maxWidth: '400px',
+            width: '90%'
+          }}>
+            <h3 style={{ marginBottom: '16px', color: 'var(--warning-color)' }}>服务性能提示</h3>
+            <p style={{ marginBottom: '24px', lineHeight: '1.5' }}>
+              为了服务的性能，我们将停止自动刷新并在30秒内清空记录日志，如需保留请点击继续自动刷新
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button 
+                className="btn btn-primary" 
+                onClick={handleContinueAutoRefresh}
+              >
+                继续自动刷新
+              </button>
+              <button 
+                className="btn" 
+                onClick={handleStopAutoRefresh}
+              >
+                停止自动刷新
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 停止自动刷新确认弹窗 */}
+      {showStopConfirm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '24px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            maxWidth: '400px',
+            width: '90%'
+          }}>
+            <h3 style={{ marginBottom: '16px', color: 'var(--warning-color)' }}>确认停止自动刷新</h3>
+            <p style={{ marginBottom: '24px', lineHeight: '1.5' }}>
+              如果停止自动刷新，则服务端将在30秒内停止监控并清空日志
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button 
+                className="btn" 
+                onClick={handleCancelStop}
+              >
+                取消
+              </button>
+              <button 
+                className="btn btn-primary" 
+                onClick={handleConfirmStop}
+              >
+                确认停止
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <div className="card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <div>
-          <h2>代理日志</h2>
+          {connectionId?<h2>连接ID详情</h2>:<h2>代理日志</h2>}
+          {connectionId && <p style={{ marginTop: 8, color: 'var(--light-text)' }}>连接ID: <strong>{connectionId}</strong></p>}
           <p style={{ marginTop: '8px', color: 'var(--light-text)' }}>
             目标URL: <a href={targetUrl} target="_blank" rel="noopener noreferrer">{targetUrl}</a>
           </p>
@@ -165,7 +304,9 @@ export default function LogViewer({ proxyId }: LogViewerProps) {
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <button className="btn btn-primary" onClick={() => fetchLogs()}>刷新日志</button>
-          <button className="btn" onClick={() => setAutoRefreshEnabled(v => !v)}>{autoRefreshEnabled ? '停止自动刷新' : '开启自动刷新'}</button>
+          <button className="btn" onClick={autoRefreshEnabled ? handleStopAutoRefreshClick : () => setAutoRefreshEnabled(true)}>
+            {autoRefreshEnabled ? '停止自动刷新' : '开启自动刷新'}
+          </button>
         </div>
       </div>
 
@@ -211,6 +352,7 @@ export default function LogViewer({ proxyId }: LogViewerProps) {
           </div>
         ))
       )}
-    </div>
+      </div>
+    </>
   );
 }
