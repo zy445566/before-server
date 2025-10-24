@@ -61,6 +61,7 @@ class ProxyManager {
   constructor() {
     this.proxies = new Map<string, ProxyInfo>(); // 存储所有代理服务
     this.logs = new Map<string, Map<string, ConnectionLog>>(); // 存储所有代理日志
+    this.recycleProxiesLogs();
 
     // 在启动时尝试根据配置文件创建代理
     // 支持环境变量 PROXY_CONFIG_PATH 指定路径，否则默认使用项目根目录下的 proxies.config.json
@@ -96,6 +97,26 @@ class ProxyManager {
     }
   }
 
+  getIsWatchingByProxyId(proxyId: string): boolean {
+    const proxy = this.proxies.get(proxyId);
+    if (!proxy) {
+      return false;
+    }
+    return proxy.watchTime>Date.now()-30*1000
+  }
+
+  // 回收没有被使用的代理服务日志
+  recycleProxiesLogs() {
+    setInterval(() => {
+      this.logs.keys().forEach((proxyId) => {
+        const isWatching = this.getIsWatchingByProxyId(proxyId)
+        if(!isWatching) {
+          this.logs.get(proxyId)?.clear()
+        }
+      });
+    },30*1000)
+  }
+
   // 创建新的代理服务
   createProxy(targetUrl: string, port?: number): ProxyInfoResponse;
   createProxy(options: CreateProxyOptions): ProxyInfoResponse;
@@ -122,15 +143,7 @@ class ProxyManager {
       const connectionLogs = new Map<string, ConnectionLog>(); // 存储每个连接的日志
       
       const proxy = net.createServer((socket: net.Socket) => {
-        const watchTime = this.proxies.get(proxyId)?.watchTime || 0;
-        let isWatching = false;
-        // 如果watchTime大于当前时间-30s，则认为是正在观看的连接，否则认为不需要记录日志，同时清空日志
-        if(watchTime>Date.now()-30*1000) {
-          isWatching = true;
-        } else {
-          // 注意只有新的请求进来后才会清空，否则将继续保留
-          connectionLogs.clear();
-        }
+        const isWatching = this.getIsWatchingByProxyId(proxyId);
         const connectionId = uuidv4();
         if(isWatching) {
           connectionLogs.set(connectionId, {
