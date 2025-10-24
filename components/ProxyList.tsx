@@ -54,10 +54,8 @@ export default function ProxyList({ proxies, onDelete, onRefresh }: ProxyListPro
     if (typeof window === 'undefined') {
       return `localhost:${proxy.port}`;
     }
-    
-    const protocol = proxy.targetUrl.startsWith('https') ? 'https' : 'http';
-    const port = window.location.port ? `:${window.location.port}` : '';
-    return `${protocol}://${window.location.hostname}:${proxy.port}`;
+    const protocol = new URL(proxy.targetUrl).protocol;
+    return `${protocol}//${window.location.hostname}:${proxy.port}`;
   };
 
   if (!proxies || proxies.length === 0) {

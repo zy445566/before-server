@@ -83,7 +83,7 @@ export default function ProxyForm({ onProxyCreated }: ProxyFormProps) {
             className="form-control"
             value={targetUrl}
             onChange={(e) => setTargetUrl(e.target.value)}
-            placeholder="例如：http://example.com 或 http://192.168.1.100:8080"
+            placeholder="例如：http://example.com 或 http://192.168.1.100:8000 或 ftp://192.168.1.100:8080"
             disabled={isLoading}
           />
         </div>

@@ -5,7 +5,7 @@
 ![Docker](https://img.shields.io/badge/Docker-支持-success)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 
-一个基于Next.js的现代化TCP代理(支持HTTP/WebSocket/SSE)调试工具，提供请求拦截、日志记录和实时监控功能，助力开发调试效率提升。
+一个基于Next.js的现代化TCP代理(支持HTTP/FTP/DNS/SMTP/WebSocket/SSE)调试工具，提供请求拦截、日志记录和实时监控功能，助力开发调试效率提升。
 
 2.0版本全面拥抱Ai编码。
 

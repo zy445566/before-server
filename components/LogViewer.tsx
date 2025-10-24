@@ -60,7 +60,8 @@ export default function LogViewer({ proxyId, connectionId }: LogViewerProps) {
       const proxyInfo = proxiesData.proxies.find((p: any) => p.id === proxyId);
       if (proxyInfo) {
         setTargetUrl(proxyInfo.targetUrl);
-        setProxyUrl(`${window.location.protocol}//${window.location.hostname}:${proxyInfo.port}`);
+        setProxyUrl(`${new URL(proxyInfo.targetUrl).protocol}//${window.location.hostname}:${proxyInfo.port}`);
+        // setProxyUrl(`${window.location.protocol}//${window.location.hostname}:${proxyInfo.port}`);
       }
 
       if (typeof logsData.total === 'number') setTotal(logsData.total);
