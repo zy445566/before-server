@@ -318,6 +318,7 @@ class ProxyManager {
     if (proxy) {
       proxy.server.close();
       this.proxies.delete(proxyId);
+      this.logs.delete(proxyId);
     }
     
     return { success: true, message: '代理服务已关闭' };
