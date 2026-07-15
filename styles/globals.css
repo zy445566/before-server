@@ -119,6 +119,40 @@ a:hover {
   background-color: #ff4d4f;
 }
 
+.connection-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary-color);
+  cursor: pointer;
+  font: inherit;
+}
+
+.connection-link:hover {
+  text-decoration: underline;
+}
+
+.connection-status {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--lighter-text);
+}
+
+.connection-status-connected {
+  background: var(--secondary-color);
+}
+
+.connection-status-connecting,
+.connection-status-reconnecting {
+  background: var(--warning-color);
+}
+
+.connection-status-disconnected {
+  background: var(--danger-color);
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;

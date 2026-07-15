@@ -1,357 +1,229 @@
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
-interface LogListData  {
-  connectionId:string,
-  createdAt:string,
-  data:string,
-  timestamp:string,
-  direction:'clientToServer'|'serverToClient'
+interface LogListData {
+  key: number;
+  connectionId: string;
+  createdAt: string;
+  data: string;
+  timestamp: string;
+  direction: 'clientToServer' | 'serverToClient';
+  truncated: boolean;
 }
 
+type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected';
 
 interface LogViewerProps {
   proxyId: string;
-  connectionId?: string;
 }
 
-export default function LogViewer({ proxyId, connectionId }: LogViewerProps) {
+const MAX_CLIENT_LOGS = 500;
+
+const statusLabels: Record<ConnectionStatus, string> = {
+  connecting: '连接中',
+  connected: '已连接',
+  reconnecting: '重连中',
+  disconnected: '已断开',
+};
+
+export default function LogViewer({ proxyId }: LogViewerProps) {
   const [logs, setLogs] = useState<LogListData[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>('');
-  const [targetUrl, setTargetUrl] = useState<string>('');
-  const [proxyUrl, setProxyUrl] = useState<string>('');
-  // 分页状态
-  const [page, setPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(10);
-  const [total, setTotal] = useState<number>(0);
-  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState<boolean>(true);
-  // 自动刷新定时停止状态
-  const [showAutoRefreshWarning, setShowAutoRefreshWarning] = useState<boolean>(false);
-
-  const fetchLogs = async () => {
-    try {
-      let url = connectionId? `/api/proxies/logs/${proxyId}/connection/${connectionId}`:`/api/proxies/logs/${proxyId}`;
-      const params = new URLSearchParams();
-      params.set('page', String(page));
-      params.set('pageSize', String(pageSize));
-      url += `?${params.toString()}`;
-
-      const [logsResponse, proxyResponse] = await Promise.all([
-        fetch(url),
-        fetch(`/api/proxies/list`)
-      ]);
-
-      if (!logsResponse.ok || !proxyResponse.ok) {
-        const errorMessage = logsResponse.status === 404 ? 
-          '代理服务不存在或已被关闭' : '获取日志失败';
-        setError(errorMessage);
-        
-        if (logsResponse.status === 404) {
-          return { shouldStopRefresh: true, isProxyGone: true };
-        }
-        return { shouldStopRefresh: true };
-      }
-
-      const logsData = await logsResponse.json();
-      const proxiesData = await proxyResponse.json();
-
-      const proxyInfo = proxiesData.proxies.find((p: any) => p.id === proxyId);
-      if (proxyInfo) {
-        setTargetUrl(proxyInfo.targetUrl);
-        setProxyUrl(`${window.location.protocol}//${window.location.hostname}:${proxyInfo.port}`);
-      }
-
-      if (typeof logsData.total === 'number') setTotal(logsData.total);
-
-      let newLogs: LogListData[] = [...logsData.logs];
-
-      setLogs(newLogs);
-      setError('');
-    } catch (error) {
-      console.error('获取日志失败:', error);
-      setError(`获取日志失败: ${error instanceof Error ? error.message : '未知错误'}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [targetUrl, setTargetUrl] = useState('');
+  const [proxyUrl, setProxyUrl] = useState('');
+  const [status, setStatus] = useState<ConnectionStatus>('connecting');
+  const [hasConnectionGap, setHasConnectionGap] = useState(false);
+  const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
+  const logKey = useRef(0);
 
   useEffect(() => {
-    let isActive = true;
-    let refreshTimer: NodeJS.Timeout | null = null;
-    let autoStopTimer: NodeJS.Timeout | null = null;
-    let isRefreshing = false;
+    let active = true;
+    let socket: WebSocket | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let reconnectAttempts = 0;
+    let proxyClosed = false;
 
-    const stopAllRefreshes = () => {
-      if (refreshTimer) {
-        clearInterval(refreshTimer);
-        refreshTimer = null;
-      }
-      if (autoStopTimer) {
-        clearTimeout(autoStopTimer);
-        autoStopTimer = null;
-      }
-    };
+    const connect = () => {
+      if (!active || proxyClosed) return;
 
-    const safeFetchLogs = async () => {
-      if (!isActive || isRefreshing) return;
-      if (!autoRefreshEnabled) { // 当关闭自动刷新时，立即停止定时器并退出
-        stopAllRefreshes();
-        return;
-      }
-      
-      try {
-        isRefreshing = true;
-        const result = await fetchLogs();
-        
-        if (!isActive) return;
+      setStatus(reconnectAttempts === 0 ? 'connecting' : 'reconnecting');
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      socket = new WebSocket(`${protocol}//${window.location.host}/ws/logs?proxyId=${encodeURIComponent(proxyId)}`);
 
-        if (result?.isProxyGone) {
-          stopAllRefreshes();
-          return;
-        }
+      socket.onmessage = (event) => {
+        if (!active) return;
 
-        if (result?.shouldStopRefresh) {
-          stopAllRefreshes();
-          return;
-        }
+        try {
+          const message = JSON.parse(event.data);
 
-        if (!refreshTimer && isActive && autoRefreshEnabled) {
-          refreshTimer = setInterval(() => safeFetchLogs(), 5000);
-          
-          // 启动15分钟自动停止定时器
-          if (!autoStopTimer) {
-            autoStopTimer = setTimeout(() => {
-              if (isActive && autoRefreshEnabled) {
-                setShowAutoRefreshWarning(true);
-                setAutoRefreshEnabled(false);
-                stopAllRefreshes();
-              }
-            }, 15* 60 * 1000); // 15分钟
+          if (message.type === 'ready') {
+            reconnectAttempts = 0;
+            setStatus('connected');
+            setError('');
+            return;
           }
+
+          if (message.type === 'proxy_closed') {
+            proxyClosed = true;
+            setStatus('disconnected');
+            setError('代理服务已被关闭');
+            return;
+          }
+
+          if (message.type === 'error') {
+            setError(message.message || '日志连接发生错误');
+            return;
+          }
+
+          if (message.type === 'gap') {
+            setHasConnectionGap(true);
+            return;
+          }
+
+          if (message.type === 'log') {
+            const log: LogListData = {
+              key: logKey.current++,
+              connectionId: message.connectionId,
+              createdAt: message.createdAt,
+              data: message.data,
+              timestamp: message.timestamp,
+              direction: message.direction,
+              truncated: Boolean(message.truncated),
+            };
+
+            setLogs((current) => [...current, log].slice(-MAX_CLIENT_LOGS));
+          }
+        } catch (parseError) {
+          console.error('解析实时日志失败:', parseError);
         }
-      } catch (error) {
-        console.error('刷新日志失败:', error);
-        stopAllRefreshes();
+      };
+
+      socket.onerror = () => {
+        if (active && !proxyClosed) setError('实时日志连接异常，正在尝试恢复');
+      };
+
+      socket.onclose = () => {
+        if (!active || proxyClosed) return;
+
+        setHasConnectionGap(true);
+        setStatus('reconnecting');
+        reconnectAttempts += 1;
+        const delay = Math.min(1000 * 2 ** (reconnectAttempts - 1), 30000);
+        reconnectTimer = setTimeout(connect, delay);
+      };
+    };
+
+    const initialize = async () => {
+      try {
+        const response = await fetch('/api/proxies/list');
+        if (!response.ok) throw new Error('获取代理信息失败');
+
+        const data = await response.json();
+        const proxyInfo = data.proxies?.find((proxy: { id: string }) => proxy.id === proxyId);
+        if (!proxyInfo) {
+          setError('代理服务不存在或已被关闭');
+          setStatus('disconnected');
+          return;
+        }
+
+        setTargetUrl(proxyInfo.targetUrl);
+        setProxyUrl(`${window.location.protocol}//${window.location.hostname}:${proxyInfo.port}`);
+        connect();
+      } catch (initializationError) {
+        setError(initializationError instanceof Error ? initializationError.message : '初始化日志连接失败');
+        setStatus('disconnected');
       } finally {
-        isRefreshing = false;
+        if (active) setIsLoading(false);
       }
     };
 
-    safeFetchLogs();
+    void initialize();
 
     return () => {
-      isActive = false;
-      stopAllRefreshes();
+      active = false;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      socket?.close(1000, 'Page closed');
     };
-  }, [proxyId, page, pageSize, autoRefreshEnabled]);
+  }, [proxyId]);
 
-  const handleContinueAutoRefresh = () => {
-    setShowAutoRefreshWarning(false);
-    // 重新启动自动刷新
-    setAutoRefreshEnabled(true);
-    // 重新启动15分钟定时器
-    setAutoRefreshEnabled(true);
-  };
-
-  const handleStopAutoRefresh = () => {
-    setShowAutoRefreshWarning(false);
-  };
-
-  const [showStopConfirm, setShowStopConfirm] = useState<boolean>(false);
-
-  const handleStopAutoRefreshClick = () => {
-    setShowStopConfirm(true);
-  };
-
-  const handleConfirmStop = () => {
-    setShowStopConfirm(false);
-    setAutoRefreshEnabled(false);
-  };
-
-  const handleCancelStop = () => {
-    setShowStopConfirm(false);
-  };
-
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const connectionIds = useMemo(
+    () => Array.from(new Set(logs.map((log) => log.connectionId))),
+    [logs],
+  );
+  const visibleLogs = selectedConnectionId
+    ? logs.filter((log) => log.connectionId === selectedConnectionId)
+    : logs;
 
   if (isLoading) {
     return <div className="loading"><div className="spinner"></div></div>;
   }
 
-  if (error) {
-    return (
-      <div className="card">
-        <div className="alert alert-error">
-          <p>{error}</p>
-        </div>
-        <div style={{ marginTop: '16px' }}>
-          {targetUrl && <p>目标URL: <a href={targetUrl} target="_blank" rel="noopener noreferrer">{targetUrl}</a></p>}
-          {proxyUrl && <p>代理URL: <a href={proxyUrl} target="_blank" rel="noopener noreferrer">{proxyUrl}</a></p>}
-        </div>
-        {connectionId ? <Link href={`/logs/${Array.isArray(proxyId) ? proxyId[0] : proxyId}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-          &larr; 返回代理日志
-        </Link>:<Link href="/" className="btn btn-primary" style={{ marginTop: '16px' }}>
-          返回代理列表
-        </Link>}
-        
-      </div>
-    );
-  }
-
   return (
-    <>
-      {/* 自动刷新警告弹窗 */}
-      {showAutoRefreshWarning && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            padding: '24px',
-            borderRadius: '8px',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-            maxWidth: '400px',
-            width: '90%'
-          }}>
-            <h3 style={{ marginBottom: '16px', color: 'var(--warning-color)' }}>服务性能提示</h3>
-            <p style={{ marginBottom: '24px', lineHeight: '1.5' }}>
-              为了服务的性能，我们将停止自动刷新并在30秒内清空记录日志，如需保留请点击继续自动刷新
-            </p>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button 
-                className="btn btn-primary" 
-                onClick={handleContinueAutoRefresh}
-              >
-                继续自动刷新
-              </button>
-              <button 
-                className="btn" 
-                onClick={handleStopAutoRefresh}
-              >
-                停止自动刷新
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 停止自动刷新确认弹窗 */}
-      {showStopConfirm && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            padding: '24px',
-            borderRadius: '8px',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-            maxWidth: '400px',
-            width: '90%'
-          }}>
-            <h3 style={{ marginBottom: '16px', color: 'var(--warning-color)' }}>确认停止自动刷新</h3>
-            <p style={{ marginBottom: '24px', lineHeight: '1.5' }}>
-              如果停止自动刷新，则服务端将在30秒内停止监控并清空日志
-            </p>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button 
-                className="btn" 
-                onClick={handleCancelStop}
-              >
-                取消
-              </button>
-              <button 
-                className="btn btn-primary" 
-                onClick={handleConfirmStop}
-              >
-                确认停止
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      <div className="card">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+    <div className="card">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 16 }}>
         <div>
-          {connectionId?<h2>连接ID详情</h2>:<h2>代理日志</h2>}
-          {connectionId && <p style={{ marginTop: 8, color: 'var(--light-text)' }}>连接ID: <strong>{connectionId}</strong></p>}
-          <p style={{ marginTop: '8px', color: 'var(--light-text)' }}>
-            目标URL: <a href={targetUrl} target="_blank" rel="noopener noreferrer">{targetUrl}</a>
-          </p>
-          <p style={{ marginTop: '8px', color: 'var(--light-text)' }}>
-            代理URL: <a href={proxyUrl} target="_blank" rel="noopener noreferrer">{proxyUrl}</a>
-          </p>
+          <h2>代理实时日志</h2>
+          {targetUrl && <p style={{ marginTop: 8, color: 'var(--light-text)' }}>目标URL: <a href={targetUrl} target="_blank" rel="noopener noreferrer">{targetUrl}</a></p>}
+          {proxyUrl && <p style={{ marginTop: 8, color: 'var(--light-text)' }}>代理URL: <a href={proxyUrl} target="_blank" rel="noopener noreferrer">{proxyUrl}</a></p>}
         </div>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <button className="btn btn-primary" onClick={() => fetchLogs()}>刷新日志</button>
-          <button className="btn" onClick={autoRefreshEnabled ? handleStopAutoRefreshClick : () => setAutoRefreshEnabled(true)}>
-            {autoRefreshEnabled ? '停止自动刷新' : '开启自动刷新'}
-          </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className={`connection-status connection-status-${status}`}></span>
+          <strong>{statusLabels[status]}</strong>
         </div>
       </div>
 
-      {/* 分页控制条 */}
-      <div className="log-header" style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <button className="btn" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>上一页</button>
-          <button className="btn" disabled={page >= totalPages} style={{ marginLeft: 8 }} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>下一页</button>
-          <span style={{ marginLeft: 12 }}>第 {page} / {totalPages} 页，共 {total} 条日志</span>
+      {hasConnectionGap && (
+        <div className="alert" style={{ marginBottom: 12 }}>
+          WebSocket 曾中断，断线期间的日志没有存储，因此无法补回。
         </div>
+      )}
+      {error && <div className="alert alert-error" style={{ marginBottom: 12 }}>{error}</div>}
+
+      <div className="log-header" style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
         <div>
-          <label htmlFor="pageSize" style={{ marginRight: 8 }}>每页数量:</label>
-          <select
-            id="pageSize"
-            value={pageSize}
-            onChange={(e) => { setPage(1); setPageSize(parseInt(e.target.value, 10)); }}
-          >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-          </select>
+          {selectedConnectionId ? (
+            <>
+              正在查看连接 <strong>{selectedConnectionId}</strong>
+              <button className="btn" style={{ marginLeft: 8 }} onClick={() => setSelectedConnectionId(null)}>清除筛选</button>
+            </>
+          ) : (
+            <span>显示全部连接，共接收 {logs.length} 条（最多保留 {MAX_CLIENT_LOGS} 条）</span>
+          )}
         </div>
+        <button className="btn" onClick={() => setLogs([])}>清空页面日志</button>
       </div>
 
-      {logs.length === 0 ? (
-        <p>暂无日志数据。可能是代理服务尚未接收到任何请求。</p>
+      {connectionIds.length > 0 && !selectedConnectionId && (
+        <div style={{ marginBottom: 16, color: 'var(--light-text)' }}>
+          已发现 {connectionIds.length} 个连接，点击日志中的连接 ID 可筛选。
+        </div>
+      )}
+
+      {visibleLogs.length === 0 ? (
+        <p>暂无实时日志。页面只显示打开后收到的数据。</p>
       ) : (
-          logs.map((log) => (
-          <div key={`${log.connectionId}-${log.timestamp}-${log.direction}`} className="log-item" style={{ marginBottom: '20px' }}>
+        visibleLogs.map((log) => (
+          <div key={log.key} className="log-item" style={{ marginBottom: 20 }}>
             <div className="log-header">
-              <div><strong>连接ID:</strong> <Link href={`/logs/connection/${proxyId}/${log.connectionId}`}>{log.connectionId.substring(0, 8)}...</Link></div>
+              <div>
+                <strong>连接ID:</strong>{' '}
+                <button className="connection-link" onClick={() => setSelectedConnectionId(log.connectionId)}>
+                  {log.connectionId.substring(0, 8)}...
+                </button>
+              </div>
               <div><strong>创建时间:</strong> {new Date(log.createdAt).toLocaleString()}</div>
             </div>
-            
             <div className="log-body">
-              {log.direction === 'clientToServer' ? <h3>客户端 → 服务器</h3> : <h3>服务器 → 客户端</h3>}
+              <h3>{log.direction === 'clientToServer' ? '客户端 → 服务器' : '服务器 → 客户端'}</h3>
               <div className="log-content">
                 <div className="log-timestamp">{new Date(log.timestamp).toLocaleString()}</div>
+                {log.truncated && <div className="alert" style={{ marginBottom: 8 }}>该数据块超过 256 KiB，日志内容已截断。</div>}
                 <pre className="code-block">{log.data}</pre>
               </div>
             </div>
           </div>
         ))
       )}
-      </div>
-    </>
+    </div>
   );
 }

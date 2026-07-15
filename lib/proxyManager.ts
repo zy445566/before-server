@@ -4,19 +4,20 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { v4 as uuidv4 } from 'uuid';
 
-// 定义日志数据接口
-interface LogData {
-  timestamp: Date;
-  data: string;
-}
-
-// 定义连接日志接口
-interface ConnectionLog {
-  id: string;
-  clientToServer: LogData[];
-  serverToClient: LogData[];
-  createdAt: Date;
-}
+const logStream: {
+  broadcastLog(log: {
+    proxyId: string;
+    connectionId: string;
+    createdAt: Date;
+    timestamp: Date;
+    direction: 'clientToServer' | 'serverToClient';
+    data: string;
+    truncated: boolean;
+  }): void;
+  closeProxy(proxyId: string): void;
+  hasSubscribers(proxyId: string, connectionId: string): boolean;
+  registerProxy(proxyId: string): void;
+} = require('./logStream');
 
 // 定义代理信息接口
 interface ProxyInfo {
@@ -25,7 +26,6 @@ interface ProxyInfo {
   port: number;
   createdAt: Date;
   server: net.Server;
-  watchTime: number;
 }
 
 // 定义代理信息返回接口（不包含server对象）
@@ -43,14 +43,6 @@ interface CreateProxyOptions {
 
 type ProxySocket = net.Socket | tls.TLSSocket;
 
-// 定义连接日志返回接口
-interface ConnectionLogResponse {
-  connectionId: string;
-  createdAt: Date;
-  clientToServer: LogData[];
-  serverToClient: LogData[];
-}
-
 // 定义操作结果接口
 interface OperationResult {
   success: boolean;
@@ -58,15 +50,11 @@ interface OperationResult {
 }
 
 class ProxyManager {
-  private static readonly MAX_LOG_ENTRIES_PER_DIRECTION = 500;
   private static readonly MAX_LOG_BYTES = 256 * 1024;
   private proxies: Map<string, ProxyInfo>;
-  private logs: Map<string, Map<string, ConnectionLog>>;
 
   constructor() {
     this.proxies = new Map<string, ProxyInfo>(); // 存储所有代理服务
-    this.logs = new Map<string, Map<string, ConnectionLog>>(); // 存储所有代理日志
-    this.recycleProxiesLogs();
 
     // 在启动时尝试根据配置文件创建代理
     // 支持环境变量 PROXY_CONFIG_PATH 指定路径，否则默认使用项目根目录下的 proxies.config.json
@@ -104,26 +92,6 @@ class ProxyManager {
     }
   }
 
-  getIsWatchingByProxyId(proxyId: string): boolean {
-    const proxy = this.proxies.get(proxyId);
-    if (!proxy) {
-      return false;
-    }
-    return proxy.watchTime>Date.now()-30*1000
-  }
-
-  // 回收没有被使用的代理服务日志
-  recycleProxiesLogs() {
-    setInterval(() => {
-      this.logs.keys().forEach((proxyId) => {
-        const isWatching = this.getIsWatchingByProxyId(proxyId)
-        if(!isWatching) {
-          this.logs.get(proxyId)?.clear()
-        }
-      });
-    },30*1000)
-  }
-
   // 创建新的代理服务
   createProxy(targetUrl: string, port?: number): Promise<ProxyInfoResponse>;
   createProxy(options: CreateProxyOptions): Promise<ProxyInfoResponse>;
@@ -150,50 +118,40 @@ class ProxyManager {
         port: parseInt(targetObj.port) || (targetObj.protocol === 'https:' ? 443 : 80) 
       };
 
-      const connectionLogs = new Map<string, ConnectionLog>(); // 存储每个连接的日志
-      
       const proxy = net.createServer((socket: net.Socket) => {
-        const isWatching = this.getIsWatchingByProxyId(proxyId);
         const connectionId = uuidv4();
-        if(isWatching) {
-          connectionLogs.set(connectionId, {
-            id: connectionId,
-            clientToServer: [],
-            serverToClient: [],
-            createdAt: new Date()
-          });
-        }
+        const createdAt = new Date();
         
         const client: ProxySocket = targetObj.protocol === 'https:'
           ? tls.connect({ ...clientOpts, servername: targetObj.hostname })
           : net.createConnection(clientOpts);
         
         socket.on('data', (data: Buffer) => {
-          if(isWatching) {
-            const dataStr = data.subarray(0, ProxyManager.MAX_LOG_BYTES).toString();
-            const logs = connectionLogs.get(connectionId);
-            if (logs) {
-              if (logs.clientToServer.length >= ProxyManager.MAX_LOG_ENTRIES_PER_DIRECTION) logs.clientToServer.shift();
-              logs.clientToServer.push({
-                timestamp: new Date(),
-                data: dataStr
-              });
-            }
+          if (logStream.hasSubscribers(proxyId, connectionId)) {
+            logStream.broadcastLog({
+              proxyId,
+              connectionId,
+              createdAt,
+              timestamp: new Date(),
+              direction: 'clientToServer',
+              data: data.subarray(0, ProxyManager.MAX_LOG_BYTES).toString(),
+              truncated: data.length > ProxyManager.MAX_LOG_BYTES,
+            });
           }
           client.write(data);
         });
         
         client.on('data', (data: Buffer) => {
-          if(isWatching) {
-            const dataStr = data.subarray(0, ProxyManager.MAX_LOG_BYTES).toString();
-            const logs = connectionLogs.get(connectionId);
-            if (logs) {
-              if (logs.serverToClient.length >= ProxyManager.MAX_LOG_ENTRIES_PER_DIRECTION) logs.serverToClient.shift();
-              logs.serverToClient.push({
-                timestamp: new Date(),
-                data: dataStr
-              });
-            }
+          if (logStream.hasSubscribers(proxyId, connectionId)) {
+            logStream.broadcastLog({
+              proxyId,
+              connectionId,
+              createdAt,
+              timestamp: new Date(),
+              direction: 'serverToClient',
+              data: data.subarray(0, ProxyManager.MAX_LOG_BYTES).toString(),
+              truncated: data.length > ProxyManager.MAX_LOG_BYTES,
+            });
           }
           socket.write(data);
         });
@@ -232,9 +190,9 @@ class ProxyManager {
 
       const address = proxy.address();
       if (!address || typeof address === 'string') throw new Error('无法获取代理服务器地址');
-      const proxyInfo: ProxyInfo = { id: proxyId, targetUrl, port: address.port, createdAt: new Date(), watchTime: 0, server: proxy };
+      const proxyInfo: ProxyInfo = { id: proxyId, targetUrl, port: address.port, createdAt: new Date(), server: proxy };
       this.proxies.set(proxyId, proxyInfo);
-      this.logs.set(proxyId, connectionLogs);
+      logStream.registerProxy(proxyId);
       return { id: proxyInfo.id, targetUrl: proxyInfo.targetUrl, port: proxyInfo.port, createdAt: proxyInfo.createdAt };
     } catch (error) {
       console.error('创建代理服务失败:', error);
@@ -256,67 +214,6 @@ class ProxyManager {
     return result;
   }
 
-  // 设置代理服务的watchTime
-  setWatchTime(proxyId: string) {
-    const proxy = this.proxies.get(proxyId);
-    if(proxy) {
-      proxy.watchTime = Date.now();
-    }
-  }
-
-  // 获取特定代理的日志
-  getProxyLogs(proxyId: string): ConnectionLogResponse[] {
-    if (!this.proxies.has(proxyId)) {
-      throw new Error('代理服务不存在');
-    }
-    this.setWatchTime(proxyId)
-
-    const connectionLogs = this.logs.get(proxyId);
-    if (!connectionLogs) {
-      return [];
-    }
-    
-    const result: ConnectionLogResponse[] = [];
-    
-    for (const [connectionId, log] of connectionLogs.entries()) {
-      // 如果没有since参数，或者连接创建时间大于since
-      result.push({
-          connectionId: log.id,
-          createdAt: log.createdAt,
-          clientToServer: log.clientToServer,
-          serverToClient: log.serverToClient
-      });
-    }
-    
-    return result;
-  }
-
-  // 获取特定代理的日志
-  getProxyConnLogs(proxyId: string, connectionId: string): ConnectionLogResponse | null {
-    if (!this.proxies.has(proxyId)) {
-      throw new Error('代理服务不存在');
-    }
-    this.setWatchTime(proxyId)
-
-    const connectionLogs = this.logs.get(proxyId);
-    if (!connectionLogs) {
-      return null;
-    }
-
-    const log = connectionLogs.get(connectionId);
-
-    if (!log) {
-      return null;
-    }
-    
-    return {
-          connectionId: log.id,
-          createdAt: log.createdAt,
-          clientToServer: log.clientToServer,
-          serverToClient: log.serverToClient
-      };
-  }
-
   // 关闭特定代理服务
   closeProxy(proxyId: string): OperationResult {
     if (!this.proxies.has(proxyId)) {
@@ -327,7 +224,7 @@ class ProxyManager {
     if (proxy) {
       proxy.server.close();
       this.proxies.delete(proxyId);
-      this.logs.delete(proxyId);
+      logStream.closeProxy(proxyId);
     }
     
     return { success: true, message: '代理服务已关闭' };
@@ -337,10 +234,10 @@ class ProxyManager {
   closeAllProxies(): OperationResult {
     for (const [id, proxy] of this.proxies.entries()) {
       proxy.server.close();
+      logStream.closeProxy(id);
     }
     
     this.proxies.clear();
-    this.logs.clear();
     
     return { success: true, message: '所有代理服务已关闭' };
   }
