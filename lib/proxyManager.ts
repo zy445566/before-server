@@ -1,4 +1,5 @@
 import * as net from 'node:net';
+import * as tls from 'node:tls';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { v4 as uuidv4 } from 'uuid';
@@ -40,6 +41,8 @@ interface CreateProxyOptions {
   port?: number;
 }
 
+type ProxySocket = net.Socket | tls.TLSSocket;
+
 // 定义连接日志返回接口
 interface ConnectionLogResponse {
   connectionId: string;
@@ -55,6 +58,8 @@ interface OperationResult {
 }
 
 class ProxyManager {
+  private static readonly MAX_LOG_ENTRIES_PER_DIRECTION = 500;
+  private static readonly MAX_LOG_BYTES = 256 * 1024;
   private proxies: Map<string, ProxyInfo>;
   private logs: Map<string, Map<string, ConnectionLog>>;
 
@@ -84,7 +89,9 @@ class ProxyManager {
             const url = item.targetUrl;
             const port = typeof item.port === 'number' ? item.port : undefined;
             try {
-              this.createProxy(url, port);
+              void this.createProxy(url, port).catch((error) => {
+                console.error('根据配置创建代理失败:', error);
+              });
             } catch (e) {
               console.error('根据配置创建代理失败:', e);
             }
@@ -118,9 +125,9 @@ class ProxyManager {
   }
 
   // 创建新的代理服务
-  createProxy(targetUrl: string, port?: number): ProxyInfoResponse;
-  createProxy(options: CreateProxyOptions): ProxyInfoResponse;
-  createProxy(targetUrlOrOptions: string | CreateProxyOptions, port?: number): ProxyInfoResponse {
+  createProxy(targetUrl: string, port?: number): Promise<ProxyInfoResponse>;
+  createProxy(options: CreateProxyOptions): Promise<ProxyInfoResponse>;
+  async createProxy(targetUrlOrOptions: string | CreateProxyOptions, port?: number): Promise<ProxyInfoResponse> {
     let targetUrl: string;
     let portNumber: number | undefined;
     
@@ -135,7 +142,10 @@ class ProxyManager {
       const proxyId = uuidv4();
       const targetObj = new URL(targetUrl);
       portNumber = portNumber || undefined; // Ensure it's either number or undefined
-      const clientOpts = { 
+      if (!['http:', 'https:'].includes(targetObj.protocol)) {
+        throw new Error('目标URL仅支持 http 或 https 协议');
+      }
+      const clientOpts = {
         host: targetObj.hostname, 
         port: parseInt(targetObj.port) || (targetObj.protocol === 'https:' ? 443 : 80) 
       };
@@ -154,13 +164,16 @@ class ProxyManager {
           });
         }
         
-        const client = net.createConnection(clientOpts);
+        const client: ProxySocket = targetObj.protocol === 'https:'
+          ? tls.connect({ ...clientOpts, servername: targetObj.hostname })
+          : net.createConnection(clientOpts);
         
         socket.on('data', (data: Buffer) => {
           if(isWatching) {
-            const dataStr = data.toString();
+            const dataStr = data.subarray(0, ProxyManager.MAX_LOG_BYTES).toString();
             const logs = connectionLogs.get(connectionId);
             if (logs) {
+              if (logs.clientToServer.length >= ProxyManager.MAX_LOG_ENTRIES_PER_DIRECTION) logs.clientToServer.shift();
               logs.clientToServer.push({
                 timestamp: new Date(),
                 data: dataStr
@@ -172,9 +185,10 @@ class ProxyManager {
         
         client.on('data', (data: Buffer) => {
           if(isWatching) {
-            const dataStr = data.toString();
+            const dataStr = data.subarray(0, ProxyManager.MAX_LOG_BYTES).toString();
             const logs = connectionLogs.get(connectionId);
             if (logs) {
+              if (logs.serverToClient.length >= ProxyManager.MAX_LOG_ENTRIES_PER_DIRECTION) logs.serverToClient.shift();
               logs.serverToClient.push({
                 timestamp: new Date(),
                 data: dataStr
@@ -201,32 +215,27 @@ class ProxyManager {
         });
       });
 
-      proxy.listen(portNumber || 0); // 使用指定端口或随机分配
-      
+      await new Promise<void>((resolve, reject) => {
+        const onError = (error: Error) => {
+          proxy.off('listening', onListening);
+          reject(error);
+        };
+        const onListening = () => {
+          proxy.off('error', onError);
+          resolve();
+        };
+        proxy.once('error', onError);
+        proxy.once('listening', onListening);
+        proxy.listen(portNumber || 0);
+      });
+      proxy.on('error', (error) => console.error(`代理服务器错误: ${error.message}`));
+
       const address = proxy.address();
-      if (!address || typeof address === 'string') {
-        throw new Error('无法获取代理服务器地址');
-      }
-      
-      const proxyInfo: ProxyInfo = {
-        id: proxyId,
-        targetUrl,
-        port: address.port,
-        createdAt: new Date(),
-        watchTime: 0,
-        server: proxy
-      };
-      
+      if (!address || typeof address === 'string') throw new Error('无法获取代理服务器地址');
+      const proxyInfo: ProxyInfo = { id: proxyId, targetUrl, port: address.port, createdAt: new Date(), watchTime: 0, server: proxy };
       this.proxies.set(proxyId, proxyInfo);
       this.logs.set(proxyId, connectionLogs);
-      
-      // 返回不包含server对象的信息
-      return {
-        id: proxyInfo.id,
-        targetUrl: proxyInfo.targetUrl,
-        port: proxyInfo.port,
-        createdAt: proxyInfo.createdAt
-      };
+      return { id: proxyInfo.id, targetUrl: proxyInfo.targetUrl, port: proxyInfo.port, createdAt: proxyInfo.createdAt };
     } catch (error) {
       console.error('创建代理服务失败:', error);
       throw error;

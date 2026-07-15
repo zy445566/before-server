@@ -55,6 +55,7 @@ export default function ProxyForm({ onProxyCreated }: ProxyFormProps) {
       }
 
       setTargetUrl('');
+      setPort(null);
       if (onProxyCreated) {
         onProxyCreated(data.proxy);
       }
@@ -78,12 +79,13 @@ export default function ProxyForm({ onProxyCreated }: ProxyFormProps) {
         <div className="form-group">
           <label htmlFor="targetUrl">目标URL</label>
           <input
-            type="text"
+            type="url"
             id="targetUrl"
             className="form-control"
             value={targetUrl}
             onChange={(e) => setTargetUrl(e.target.value)}
-            placeholder="例如：http://example.com 或 http://192.168.1.100:8000 或 ftp://192.168.1.100:8080"
+            placeholder="例如：http://example.com 或 https://api.example.com:8443"
+            required
             disabled={isLoading}
           />
         </div>

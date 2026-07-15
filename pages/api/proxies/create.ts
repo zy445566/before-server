@@ -13,7 +13,7 @@ type ResponseData = {
   message?: string;
 }
 
-export default function handler(
+export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<ResponseData>
 ) {
@@ -24,22 +24,23 @@ export default function handler(
   try {
     const { targetUrl, port } = req.body;
     
-    if (!targetUrl) {
+    if (typeof targetUrl !== 'string' || !targetUrl.trim()) {
       return res.status(400).json({ success: false, error: '缺少目标URL参数' });
     }
 
-    if (port && (typeof port !== 'number' || port < 1024 || port > 65535)) {
+    if (port !== undefined && port !== null && (typeof port !== 'number' || !Number.isInteger(port) || port < 1024 || port > 65535)) {
       return res.status(400).json({ success: false, error: '端口号必须在1024-65535之间' });
     }
 
     // 验证URL格式
     try {
-      new URL(targetUrl);
+      const parsed = new URL(targetUrl);
+      if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('仅支持 http 或 https 协议');
     } catch (error) {
       return res.status(400).json({ success: false, error: 'URL格式无效' });
     }
 
-    const proxyInfo = proxyManager.createProxy(targetUrl, port);
+    const proxyInfo = await proxyManager.createProxy(targetUrl.trim(), port);
     
     return res.status(200).json({
       success: true,
